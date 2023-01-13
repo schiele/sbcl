@@ -700,6 +700,11 @@ esac
 $GNUMAKE -C tools-for-build determine-endianness -I ../src/runtime
 tools-for-build/determine-endianness >> $ltf
 
+$GNUMAKE -C tools-for-build testftz OS_LIBS+=-lm
+if tools-for-build/testftz; then
+    printf ' :normalize-float' >> $ltf
+fi
+
 export sbcl_os sbcl_arch
 sh tools-for-build/grovel-features.sh >> $ltf
 
