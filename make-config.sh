@@ -778,6 +778,19 @@ else
         tools-for-build/determine-endianness >> $ltf
 fi
 
+if $android
+then
+    $CC tools-for-build/testftz*.c -o tools-for-build/testftz -lm
+    if android_run tools-for-build/testftz; then
+        printf ' :normalize-float' >> $ltf
+    fi
+else
+    $GNUMAKE -C tools-for-build testftz OS_LIBS+=-lm
+    if tools-for-build/testftz; then
+        printf ' :normalize-float' >> $ltf
+    fi
+fi
+
 export sbcl_os sbcl_arch android
 sh tools-for-build/grovel-features.sh >> $ltf
 
