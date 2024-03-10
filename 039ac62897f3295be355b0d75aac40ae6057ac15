@@ -11,3 +11,5 @@ FAILED:
 ++ failnote
 ++ tail -n 25 .build.log
 ++ git notes append --no-separator -m FAILED: -F -
+======================================================================
+build started for 2.4.2.119-039ac6289 with SBCL 2.4.2.118-503d086c1 on Sun Mar 10 08:03:50 AM CET 2024
