@@ -6,3 +6,8 @@ build successfully completed with SBCL 2.4.2.118-503d086c1 on Sun Mar 10 07:51:3
 build started for 2.4.2.119-039ac6289 with SBCL 2.4.2.118-503d086c1 on Sun Mar 10 07:59:01 AM CET 2024
 ======================================================================
 build started for 2.4.2.119-039ac6289 with SBCL 2.4.2.118-503d086c1 on Sun Mar 10 07:59:22 AM CET 2024
+FAILED:
++ false
+++ failnote
+++ tail -n 25 .build.log
+++ git notes append --no-separator -m FAILED: -F -
