@@ -21,3 +21,9 @@ FAILED:
 ++ git notes append --no-separator -m FAILED: -F -
 ======================================================================
 build started\nversion: 2.4.2.119-039ac6289\nbootstrap: SBCL 2.4.2.118-503d086c1\ndate: Sun Mar 10 08:06:42 AM CET 2024
+FAILED:
++ false
+++ failnote
+++ tail -n 29 .build.log
+++ head -n 25
+++ git notes append --no-separator -m FAILED: -F -
