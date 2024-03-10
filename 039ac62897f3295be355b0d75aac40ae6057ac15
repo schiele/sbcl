@@ -4,3 +4,4 @@ bootstrap: SBCL 2.4.2.118-503d086c1
 date: Sun Mar 10 08:12:52 AM CET 2024
 build
 test
+doc
