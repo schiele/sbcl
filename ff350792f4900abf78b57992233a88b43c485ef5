@@ -1,7 +1,7 @@
 BUILD: 2.4.2.127-ff350792f
 bootstrap: SBCL 2.4.2.119.master.1-7456a078e
 date: Mon Mar 11 08:34:39 AM CET 2024
-xxx
+build
 test
 doc
 install
