@@ -2,3 +2,29 @@ BUILD: 2.4.2.125-da7f10f30
 bootstrap: SBCL 2.4.2.98-aeb12f91c
 date: Mon Mar 11 11:01:25 AM CET 2024
 tasks: build test[failed]
+FAILED:
+; compiling file "/tmp/undefined-classoid-bug-test-2742388/undefined-classoid-bug-2.lisp" (written 11 MAR 2024 11:11:37 AM):
+
+; wrote /tmp/undefined-classoid-bug-test-2742388/undefined-classoid-bug-2.fasl
+; compilation finished in 0:00:00.003
+test undefined-classoid-bug ok
+
+Finished running tests.
+Status:
+ Failure:            cmp-combinations.pure.lisp / RANGES
+ Failure:            cmp-combinations.pure.lisp / CMP-CONSTANT-FRACTION
+ Skipped (broken):   compiler.pure.lisp / FULL-WARNING-FOR-UNDEFINED-TYPE-IN-CL
+ Skipped (broken):   compiler.pure.lisp / SINGLE-WARNING-FOR-SINGLE-UNDEFINED-TYPE
+ Skipped (broken):   gethash-concurrency.pure.lisp / (HASH-TABLE UNSYNCHRONIZED)
+ Expected failure:   hash.pure.lisp / SXHASH-ON-DISPLACED-STRING
+ Expected failure:   block-compile.impure.lisp / BLOCK-COMPILE-TOP-LEVEL-CLOSURES.SAME-ENVIRONMENT.LOCAL-CALLS
+ Expected failure:   compiler-2.impure.lisp / TOP-LEVEL-CLOSURE-SEPARATE-COMPONENT
+ Expected failure:   compiler-2.impure.lisp / TOP-LEVEL-CLOSURE-SEPARATE-COMPONENT.2
+ Invalid exit status: compiler.impure.lisp
+ Expected failure:   full-eval.impure.lisp / INLINE-FUN-CAPTURES-DECL
+ Expected failure:   packages.impure.lisp / USE-PACKAGE-CONFLICT-SET
+ Expected failure:   packages.impure.lisp / IMPORT-SINGLE-CONFLICT
+ Skipped (broken):   run-program.impure.lisp / (RUN-PROGRAM AUTOCLOSE-STREAMS)
+ Failure:            ../contrib/sb-bsd-sockets/tests.lisp / ABSTRACT.SMOKE
+ (26 tests skipped for this combination of platform and features)
+test failed, expected 104 return code, got 1
