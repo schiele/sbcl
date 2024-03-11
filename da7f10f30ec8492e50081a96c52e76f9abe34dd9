@@ -28,3 +28,5 @@ Status:
  Failure:            ../contrib/sb-bsd-sockets/tests.lisp / ABSTRACT.SMOKE
  (26 tests skipped for this combination of platform and features)
 test failed, expected 104 return code, got 1
+======================================================================
+BUILD: 2.4.2.125-da7f10f30
