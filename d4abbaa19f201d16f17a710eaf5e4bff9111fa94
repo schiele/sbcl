@@ -1,4 +1,4 @@
 BUILD: 2.3.7.83.HEAD.1-1f4e26fcb
 bootstrap: SBCL 2.4.2.133-0a407ccb4
 date: Mon Mar 11 08:04:28 PM CET 2024
-tasks: build test doc[incomplete]
+tasks: build test doc install[incomplete]
