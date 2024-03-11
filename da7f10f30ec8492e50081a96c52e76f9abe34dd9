@@ -12,3 +12,29 @@ BUILD: 2.4.2.125-da7f10f30
 bootstrap:
 date: Mon Mar 11 09:53:34 AM CET 2024
 tasks: build[failed]
+FAILED:
+; compilation finished in 0:00:00.011
+; compiling file "/home/rschiele/sbcl/src/compiler/sset.lisp" (written 10 MAR 2023 05:11:13 AM):
+
+; wrote /home/rschiele/sbcl/obj/from-host/src/compiler/sset.fasl-tmp
+; compilation finished in 0:00:00.025
+; compiling file "/home/rschiele/sbcl/src/compiler/node.lisp" (written 11 MAR 2024 09:44:32 AM):
+; compilation aborted after 0:00:00.058
+;
+; compilation unit aborted
+;   caught 2 fatal ERROR conditions
+
+real	0m4.321s
+user	0m4.090s
+sys	0m0.216s
+//entering make-target-1.sh
+//building runtime system and symbol table file
+make: Entering directory '/home/rschiele/sbcl/src/runtime'
+GNUmakefile:41: genesis/Makefile.features: No such file or directory
+make: *** No rule to make target 'genesis/Makefile.features'.  Stop.
+make: Leaving directory '/home/rschiele/sbcl/src/runtime'
+
+real	0m0.003s
+user	0m0.002s
+sys	0m0.001s
+++ failnote
