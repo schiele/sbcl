@@ -1,4 +1,4 @@
 BUILD: 2.4.2.234-0e46628ed
 bootstrap: SBCL 2.4.2.228-6b28a63e3
 date: Wed Mar 20 04:39:13 PM CET 2024
-tasks: build test doc install[incomplete]
+tasks: build test doc install
