@@ -32,4 +32,4 @@ test failed, expected 104 return code, got 1
 BUILD: 2.4.3.96-30a972c4e
 bootstrap: SBCL 2.4.3.93-3d6d92dc2
 date: Tue Apr  9 05:02:37 PM CEST 2024
-tasks: build test doc install[incomplete]
+tasks: build test doc install
