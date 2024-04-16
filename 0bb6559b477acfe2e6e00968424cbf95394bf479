@@ -1,4 +1,4 @@
 BUILD: 2.4.3.135-0bb6559b4
 bootstrap: SBCL 2.4.3.126-711d96391
 date: Tue Apr 16 09:14:11 AM CEST 2024
-tasks: build test[incomplete]
+tasks: build test doc[incomplete]
