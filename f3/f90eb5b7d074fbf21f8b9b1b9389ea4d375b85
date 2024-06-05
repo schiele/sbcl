@@ -3,3 +3,4 @@ bootstrap: SBCL 2.4.5.40-8f2a137ad
 system: 41780
 date: Wed Jun  5 07:50:17 AM CEST 2024
 tasks: build test doc install
+SUCCESS
