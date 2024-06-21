@@ -2,4 +2,4 @@ BUILD: 2.4.5.120-726d03811
 bootstrap: SBCL 2.4.5.72-d5d460085
 system: 41900
 date: Fri Jun 21 01:27:25 PM CEST 2024
-tasks: build test doc[incomplete]
+tasks: build test doc install[incomplete]
