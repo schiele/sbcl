@@ -2,4 +2,4 @@ BUILD: 2.4.6
 bootstrap: SBCL 2.4.7.92-81dd082bc
 system: 42110
 date: Wed Aug  7 08:18:34 PM CEST 2024
-tasks: build[incomplete]
+tasks: build test[incomplete]
