@@ -34,4 +34,4 @@ BUILD: 2.4.8.132-144b932a7
 bootstrap: SBCL 2.4.8.61-9f358b8a4
 system: 42390
 date: Sun Sep 22 06:49:36 PM CEST 2024
-tasks: build test[incomplete]
+tasks: build test[failed]
