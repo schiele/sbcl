@@ -19,7 +19,7 @@
 ;; (nanosleep -1 0) does not fail on FreeBSD
 (with-test (:name (:exercising-concurrent-syscalls)
             :broken-on :win32)
-  (let* (#-freebsd
+  (let* (#-(or freebsd linux)
          (nanosleep-errno (progn
                             (sb-unix:nanosleep -1 0)
                             (sb-unix::get-errno)))
@@ -29,7 +29,7 @@
                        (sb-unix::get-errno)))
          (threads
           (list
-           #-freebsd
+           #-(or freebsd linux)
            (exercise-syscall (lambda () (sb-unix:nanosleep -1 0)) nanosleep-errno)
            (exercise-syscall (lambda () (open "no-such-file"
                                               :if-does-not-exist nil))
