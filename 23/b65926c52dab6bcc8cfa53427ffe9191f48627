@@ -2,4 +2,4 @@ BUILD: 2.4.8.136.master.1-4af8f6ade
 bootstrap: SBCL 2.4.8.135.master.1-91e4838df
 system: 42410
 date: Thu Sep 26 07:55:21 PM CEST 2024
-tasks: build test doc[incomplete]
+tasks: build test doc install[incomplete]
