@@ -2,4 +2,4 @@ BUILD: 2.4.9.0.HEAD.1-1cead74c4
 bootstrap: SBCL 2.4.9.10.master.1-67a3e82fe
 system: 42410
 date: Mon Sep 30 09:08:56 AM CEST 2024
-tasks: build test doc install[incomplete]
+tasks: build test doc install
