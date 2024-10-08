@@ -2,4 +2,4 @@ BUILD: 2.4.9.30.master.1-31f9dfdb3
 bootstrap: SBCL 2.4.9.18.master.1-9ded97135
 system: 42440
 date: Tue Oct  8 07:59:29 PM CEST 2024
-tasks: build[incomplete]
+tasks: build test[incomplete]
