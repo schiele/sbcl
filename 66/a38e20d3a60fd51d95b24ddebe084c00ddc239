@@ -2,4 +2,4 @@ BUILD: 2.4.9.44.master.1-d905bac42
 bootstrap: SBCL 2.4.9.36.master.1-08a447833
 system: 42440
 date: Fri Oct 11 12:44:44 PM CEST 2024
-tasks: build test doc[incomplete]
+tasks: build test doc install[incomplete]
