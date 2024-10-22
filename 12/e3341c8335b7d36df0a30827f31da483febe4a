@@ -29,3 +29,5 @@ Status:
  Unhandled Error     timer.impure.lisp
  (28 tests skipped for this combination of platform and features)
 test failed, expected 104 return code, got 1
+======================================================================
+BUILD: 2.4.9.77-12e3341c8
