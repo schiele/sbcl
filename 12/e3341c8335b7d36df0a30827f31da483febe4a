@@ -3,3 +3,29 @@ bootstrap: SBCL 2.4.9.74-a3d76fc06
 system: 42510
 date: Tue Oct 22 05:31:47 AM CEST 2024
 tasks: build test[failed]
+FAILED:
+;   caught 1 STYLE-WARNING condition
+; compiling file "/tmp/undefined-classoid-bug-test-3260895/undefined-classoid-bug-1.lisp" (written 22 OCT 2024 05:50:16 AM):
+
+; wrote /tmp/undefined-classoid-bug-test-3260895/undefined-classoid-bug-1.fasl
+; compilation finished in 0:00:00.001
+; compiling file "/tmp/undefined-classoid-bug-test-3260895/undefined-classoid-bug-2.lisp" (written 22 OCT 2024 05:50:16 AM):
+
+; wrote /tmp/undefined-classoid-bug-test-3260895/undefined-classoid-bug-2.fasl
+; compilation finished in 0:00:00.003
+test undefined-classoid-bug ok
+
+Finished running tests.
+Status:
+ Skipped (broken):   compiler.pure.lisp / FULL-WARNING-FOR-UNDEFINED-TYPE-IN-CL
+ Skipped (broken):   compiler.pure.lisp / SINGLE-WARNING-FOR-SINGLE-UNDEFINED-TYPE
+ Skipped (broken):   gethash-concurrency.pure.lisp / (HASH-TABLE UNSYNCHRONIZED)
+ Expected failure:   hash.pure.lisp / SXHASH-ON-DISPLACED-STRING
+ Expected failure:   block-compile.impure.lisp / BLOCK-COMPILE-TOP-LEVEL-CLOSURES.SAME-ENVIRONMENT.LOCAL-CALLS
+ Expected failure:   compiler-2.impure.lisp / TOP-LEVEL-CLOSURE-SEPARATE-COMPONENT
+ Expected failure:   compiler-2.impure.lisp / TOP-LEVEL-CLOSURE-SEPARATE-COMPONENT.2
+ Expected failure:   full-eval.impure.lisp / INLINE-FUN-CAPTURES-DECL
+ Skipped (broken):   run-program.impure.lisp / (RUN-PROGRAM AUTOCLOSE-STREAMS)
+ Unhandled Error     timer.impure.lisp
+ (28 tests skipped for this combination of platform and features)
+test failed, expected 104 return code, got 1
