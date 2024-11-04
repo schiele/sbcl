@@ -35,3 +35,5 @@ Status:
  Skipped (broken):   run-program.impure.lisp / (RUN-PROGRAM AUTOCLOSE-STREAMS)
  (28 tests skipped for this combination of platform and features)
 test failed, expected 104 return code, got 1
+======================================================================
+BUILD: 2.4.10.18-fbd793c91
