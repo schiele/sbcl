@@ -38,3 +38,7 @@ tasks: build test doc install
 SUCCESS
 ======================================================================
 BUILD: 2.4.10.22-659d5b0ba
+bootstrap: SBCL 2.4.10.22.master.3-3cc041dbf
+system: 42540
+date: Tue Nov  5 08:28:05 AM CET 2024
+tasks:[incomplete]
