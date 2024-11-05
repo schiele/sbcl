@@ -61,3 +61,5 @@ make: Leaving directory '/home/rschiele/sbcl/src/runtime'
 real	0m1.726s
 user	0m11.136s
 sys	0m1.221s
+======================================================================
+BUILD: 2.4.10.21-e1ea7f53c
