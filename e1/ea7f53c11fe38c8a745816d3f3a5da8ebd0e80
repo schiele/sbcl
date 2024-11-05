@@ -34,4 +34,4 @@ BUILD: 2.4.10.21.HEAD.1-319db777b
 bootstrap: SBCL 2.4.10.17-ae71da843
 system: 42540
 date: Tue Nov  5 07:07:57 AM CET 2024
-tasks:[incomplete]
+tasks: build[incomplete]
