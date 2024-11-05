@@ -66,4 +66,4 @@ BUILD: 2.4.10.21-e1ea7f53c
 bootstrap: SBCL 2.4.10.22-659d5b0ba
 system: 42540
 date: Tue Nov  5 10:51:40 AM CET 2024
-tasks: build[incomplete]
+tasks: build test[incomplete]
