@@ -34,4 +34,4 @@ BUILD: 2.4.10.22.master.3-3cc041dbf
 bootstrap: SBCL 2.4.10.17-ae71da843
 system: 42540
 date: Tue Nov  5 07:14:13 AM CET 2024
-tasks: build test doc[incomplete]
+tasks: build test doc install[incomplete]
