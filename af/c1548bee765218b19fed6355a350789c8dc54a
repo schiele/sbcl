@@ -2,4 +2,4 @@ BUILD: 2.4.10.121-afc1548be
 bootstrap: SBCL 2.4.10.120-91df6eb86
 system: 42670
 date: Fri Nov 22 09:20:25 PM CET 2024
-tasks: build test doc[incomplete]
+tasks: build test doc install[incomplete]
