@@ -1,1 +1,5 @@
 BUILD: 2.4.11.9-9609233f8
+bootstrap: SBCL 2.4.11.8-4db58a030
+system: 42710
+date: Tue Dec  3 09:24:58 AM CET 2024
+tasks:[incomplete]
