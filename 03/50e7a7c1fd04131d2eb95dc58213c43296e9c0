@@ -2,4 +2,4 @@ BUILD: 2.5.0.146-0350e7a7c
 bootstrap: SBCL 2.5.0.145-03d390b71
 system: 42870
 date: Fri Jan 24 09:54:55 AM CET 2025
-tasks: build[incomplete]
+tasks: build test[incomplete]
