@@ -1,1 +1,5 @@
 BUILD: 2.5.1.64-771d42b9f
+bootstrap: SBCL 2.5.1.61-f16739e0a
+system: 42950
+date: Wed Feb 12 06:51:48 PM CET 2025
+tasks:[incomplete]
