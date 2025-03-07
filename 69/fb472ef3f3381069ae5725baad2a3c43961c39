@@ -2,4 +2,4 @@ BUILD: 2.5.2.49-69fb472ef
 bootstrap: SBCL 2.5.2.46-3a15f157b
 system: 43080
 date: Fri Mar  7 06:53:12 PM CET 2025
-tasks: build test doc[incomplete]
+tasks: build test doc install[incomplete]
