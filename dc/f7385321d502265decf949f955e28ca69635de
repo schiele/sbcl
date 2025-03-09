@@ -31,3 +31,7 @@ Status:
 test failed, expected 104 return code, got 1
 ======================================================================
 BUILD: 2.5.2.67-dcf738532
+bootstrap: SBCL 2.5.2.61-d8f3a3acc
+system: 43090
+date: Sun Mar  9 10:41:59 AM CET 2025
+tasks:[incomplete]
