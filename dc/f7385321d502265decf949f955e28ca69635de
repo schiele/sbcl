@@ -29,3 +29,5 @@ Status:
  Invalid exit status: elfcore.test.sh
  (28 tests skipped for this combination of platform and features)
 test failed, expected 104 return code, got 1
+======================================================================
+BUILD: 2.5.2.67-dcf738532
