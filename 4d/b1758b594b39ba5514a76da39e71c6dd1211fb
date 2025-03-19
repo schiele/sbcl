@@ -3,3 +3,29 @@ bootstrap: SBCL 2.5.2.140-568210a62
 system: 43130
 date: Wed Mar 19 05:38:47 PM CET 2025
 tasks: build test[failed]
+FAILED:
+
+; wrote /tmp/undefined-classoid-bug-test-1902802/undefined-classoid-bug-1.fasl
+; compilation finished in 0:00:00.004
+; compiling file "/tmp/undefined-classoid-bug-test-1902802/undefined-classoid-bug-2.lisp" (written 19 MAR 2025 05:54:02 PM):
+
+; wrote /tmp/undefined-classoid-bug-test-1902802/undefined-classoid-bug-2.fasl
+; compilation finished in 0:00:00.012
+test undefined-classoid-bug ok
+
+Finished running tests.
+Status:
+ Skipped (broken):   compiler.pure.lisp / FULL-WARNING-FOR-UNDEFINED-TYPE-IN-CL
+ Skipped (broken):   compiler.pure.lisp / SINGLE-WARNING-FOR-SINGLE-UNDEFINED-TYPE
+ Skipped (broken):   gethash-concurrency.pure.lisp / (HASH-TABLE UNSYNCHRONIZED)
+ Expected failure:   hash.pure.lisp / SXHASH-ON-DISPLACED-STRING
+ Expected failure:   block-compile.impure.lisp / BLOCK-COMPILE-TOP-LEVEL-CLOSURES.SAME-ENVIRONMENT.LOCAL-CALLS
+ Expected failure:   compiler-2.impure.lisp / TOP-LEVEL-CLOSURE-SEPARATE-COMPONENT
+ Expected failure:   compiler-2.impure.lisp / TOP-LEVEL-CLOSURE-SEPARATE-COMPONENT.2
+ Expected failure:   full-eval.impure.lisp / INLINE-FUN-CAPTURES-DECL
+ Expected failure:   reader.impure.lisp / (SHARP= EQUALP HASH-TABLE KEY)
+ Expected failure:   reader.impure.lisp / (SHARP= MAKE-ARRAY DISPLACED-TO)
+ Skipped (broken):   run-program.impure.lisp / (RUN-PROGRAM AUTOCLOSE-STREAMS)
+ Invalid exit status: elfcore.test.sh
+ (28 tests skipped for this combination of platform and features)
+test failed, expected 104 return code, got 1
