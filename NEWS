@@ -5,7 +5,7 @@ changes relative to sbcl-2.6.3:
     previously used as a (presumed) call to a function, it issues a single
     STYLE-WARNING (like DEFMACRO).
   * minor incompatible change: SB-EXT:PROCESS-KILL no longer supports the
-    :PTY-PROCESS-GROUP option.
+    :PTY-PROCESS-GROUP option (which was never correctly implemented).
   * minor incompatible change: the :INITIAL-OFFSET argument for typed
     DEFSTRUCT, if given, no longer accepts NIL.
   * platform support:
@@ -14,11 +14,11 @@ changes relative to sbcl-2.6.3:
        platform/compiler combinations that support it.
     ** on Windows, individual empty arguments for RUN-PROGRAM are escaped.
     ** add input/output speed fields for our definition of the termios
-       structure, addressing a crash on in sb-posix:tcsetattr on OpenBSD.
+       structure, addressing a crash in sb-posix:tcsetattr on OpenBSD.
        (lp#2150499, thanks to Robert Palm)
   * bug fix: address infinite loops in the compiler.  (lp#2144911, lp#2148056)
-  * bug fix: if a FTYPE has been proclaimed for a function, don't mix NULL
-    with explicitly-type keyword arguments.  (lp#2147050, reported by Vasily
+  * bug fix: if an FTYPE has been proclaimed for a function, don't mix NULL
+    with explicitly-typed keyword arguments.  (lp#2147050, reported by Vasily
     Postnicov)
   * bug fix: compiler error from treatment of unused results.  (lp#2147383)
   * bug fix: compiler error from invalid dimension arguments to MAKE-ARRAY.
@@ -34,7 +34,7 @@ changes relative to sbcl-2.6.3:
   * bug fix: lowering EQUALP to EQUAL handles constant dotted lists correctly.
   * bug fix: a number of standard functions perform more explicit type checks
     on their arguments.
-  * bug fix: only return the primary value from (LIST* <values>)
+  * bug fix: only return the primary value from (LIST*/APPEND/NCONC <values>).
   * bug fix: correct treatment of escaped closing brackets in pathname
     patterns.
   * bug fix: escape dots in pathnames more correctly.
@@ -42,8 +42,8 @@ changes relative to sbcl-2.6.3:
     frequently.  (reported by Andrew Wolven)
   * bug fix: the system is now capable of expressing select() on the whole
     range of possible file descriptors.
-  * optimization: compiler optimizations for REPLACE now apply given :START1
-    and/or :END1 keyword arguments
+  * optimization: compiler optimizations for (REPLACE vector list) now apply
+    given :START1 and/or :END1 keyword arguments.
   * optimization: CONCATENATE is faster for concatenating list arguments to a
     VECTOR.
   * optimization: ROUND for integers is more compact.
