@@ -1,6 +1,6 @@
 ;;;; -*- coding: utf-8; fill-column: 78 -*-
 
-changes relative to sbcl-2.6.2:
+changes relative to sbcl-2.6.3:
   * minor incompatible change: when DEFSETF is called on a name that was
     previously used as a (presumed) call to a function, it issues a single
     STYLE-WARNING (like DEFMACRO).
@@ -13,6 +13,9 @@ changes relative to sbcl-2.6.2:
     ** the runtime's main function is now defined as a weak symbol for
        platform/compiler combinations that support it.
     ** on Windows, individual empty arguments for RUN-PROGRAM are escaped.
+    ** add input/output speed fields for our definition of the termios
+       structure, addressing a crash on in sb-posix:tcsetattr on OpenBSD.
+       (lp#2150499, thanks to Robert Palm)
   * bug fix: address infinite loops in the compiler.  (lp#2144911, lp#2148056)
   * bug fix: if a FTYPE has been proclaimed for a function, don't mix NULL
     with explicitly-type keyword arguments.  (lp#2147050, reported by Vasily
