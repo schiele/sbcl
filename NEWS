@@ -1,6 +1,6 @@
 ;;;; -*- coding: utf-8; fill-column: 78 -*-
 
-changes relative to sbcl-2.6.3:
+changes in sbcl-2.6.4 relative to sbcl-2.6.3:
   * minor incompatible change: when DEFSETF is called on a name that was
     previously used as a (presumed) call to a function, it issues a single
     STYLE-WARNING (like DEFMACRO).
