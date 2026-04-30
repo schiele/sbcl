@@ -57,7 +57,6 @@ stale value, use MUTEX-OWNER instead."
   ;; sufficient.
   (= (mutex-%owner mutex) (current-vmthread-id)))
 
-(declaim (inline mutex-owner))
 (defun mutex-owner (mutex)
   "Current owner of the mutex, NIL if the mutex is free. Naturally,
 this is racy by design (another thread may acquire the mutex after
@@ -65,7 +64,8 @@ this function returns), it is intended for informative purposes. For
 testing whether the current thread is holding a mutex see
 HOLDING-MUTEX-P."
   ;; Make sure to get the current value.
-  (let ((vmthread (sb-ext:compare-and-swap (mutex-%owner mutex) 0 0)))
+  (barrier (:read))
+  (let ((vmthread (mutex-%owner mutex)))
     (cond ((= vmthread (current-vmthread-id)) *current-thread*)
           ((= vmthread 0) nil)
           (t (mutex-owner-lookup vmthread)))))
