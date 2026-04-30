@@ -1411,12 +1411,11 @@
   (:translate sb-c::mask-signed-field)
   (:policy :fast-safe)
   (:args (x :scs (signed-reg unsigned-reg)))
-  (:arg-types (:constant (integer 0 64)) untagged-num)
+  (:arg-types (:constant (integer 1 64)) untagged-num)
   (:results (r :scs (signed-reg)))
   (:result-types signed-num)
   (:info width)
   (:generator 3
-    (aver (/= width 0))
     (cond ((= width 64)
            (move r x))
           (t
@@ -1426,12 +1425,11 @@
   (:translate sb-c::mask-signed-field)
   (:policy :fast-safe)
   (:args (x :scs (descriptor-reg)))
-  (:arg-types (:constant (integer 0 64)) bignum)
+  (:arg-types (:constant (integer 1 64)) bignum)
   (:results (r :scs (signed-reg)))
   (:result-types signed-num)
   (:info width)
   (:generator 4
-    (aver (/= width 0))
     (loadw r x bignum-digits-offset other-pointer-lowtag)
     (inst sbfm r r 0 (1- width))))
 
@@ -1468,7 +1466,7 @@
   (:policy :fast-safe)
   (:args (x :scs (descriptor-reg)))
   (:arg-refs x-ref)
-  (:arg-types (:constant (integer 0 64)) t)
+  (:arg-types (:constant (integer 1 64)) t)
   (:results (r :scs (signed-reg)))
   (:result-types signed-num)
   (:info width)
@@ -1476,7 +1474,6 @@
   (:vop-var vop)
   (:save-p :compute-only)
   (:generator 63
-    (aver (/= width 0))
     (inst asr r x n-fixnum-tag-bits)
     (inst tbz x 0 do)
     (let* ((integerp (csubtypep (tn-ref-type x-ref)
@@ -3865,11 +3862,10 @@
   (:translate rotate-right-word)
   (:args (integer :scs (unsigned-reg) :target result))
   (:info count)
-  (:arg-types unsigned-num (:constant (mod 64)))
+  (:arg-types unsigned-num (:constant (integer 1 63)))
   (:results (result :scs (unsigned-reg)))
   (:result-types unsigned-num)
   (:generator 5
-    (aver (not (= count 0)))
     (inst ror result integer count)))
 
 (define-vop ()
@@ -3906,7 +3902,8 @@
   (:arg-types unsigned-num)
   (:results (res :scs (unsigned-reg)))
   (:result-types unsigned-num)
-  (:generator 1 (inst rbit res arg)))
+  (:generator 1
+    (inst rbit res arg)))
 
 (deftransform abs ((x) (:or ((signed-word) signed-word)) * :vop t)
   t)
