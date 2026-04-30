@@ -33,6 +33,7 @@
 #include "runtime.h"
 #include "genesis/static-symbols.h"
 #include "genesis/symbol.h"
+#include "genesis/events.h"
 
 #include <errno.h>
 
@@ -134,6 +135,7 @@ futex_wait(int *lock_word, int oldval, long sec, unsigned long usec)
   int t;
 
   if (sec<0) {
+      event_FutexWait(lock_word);
       t = sys_futex(lock_word, futex_wait_op(), oldval, 0);
   }
   else {
@@ -155,6 +157,7 @@ futex_wait(int *lock_word, int oldval, long sec, unsigned long usec)
 int
 futex_wake(int *lock_word, int n)
 {
+    event_FutexWake(lock_word);
     return sys_futex(lock_word, futex_wake_op(),n,0);
 }
 #endif

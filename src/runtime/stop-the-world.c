@@ -16,7 +16,7 @@
 #include "pseudo-atomic.h"
 #include "interrupt.h"
 #include "lispregs.h"
-#include "atomiclog.inc"
+#include "genesis/events.h"
 
 #ifdef LISP_FEATURE_SB_THREAD
 
@@ -132,17 +132,17 @@ sig_stop_for_gc_handler(int __attribute__((unused)) signal,
     /* Test for GC_INHIBIT _first_, else we'd trap on every single
      * pseudo atomic until gc is finally allowed. */
     if (read_TLS(GC_INHIBIT,thread) != NIL) {
-        event0("stop_for_gc deferred for *GC-INHIBIT*");
+        event_StopDeferred_GCinhibit();
         write_TLS(STOP_FOR_GC_PENDING, LISP_T, thread);
         return;
     } else if (arch_pseudo_atomic_atomic(thread)) {
-        event0("stop_for_gc deferred for PA");
+        event_StopDeferred_PA();
         write_TLS(STOP_FOR_GC_PENDING, LISP_T, thread);
         arch_set_pseudo_atomic_interrupted(thread);
         maybe_save_gc_mask_and_block_deferrables(context);
         return;
     }
-    event0("stop_for_gc");
+    event_StopForGC();
 
     if (!thread->state_word.control_stack_guard_page_protected) {
         protect_control_stack_return_guard_page(0, thread);
@@ -171,7 +171,7 @@ sig_stop_for_gc_handler(int __attribute__((unused)) signal,
      * GC. GC_BLOCKED_DEFERRABLES is also left at 1. So let's tidy it
      * up. */
     if (thread_interrupt_data(thread).gc_blocked_deferrables) {
-        event0("cleaning up after gc_blocked_deferrables");
+        event_AfterGCblockedDeferrables();
         clear_pseudo_atomic_interrupted(thread);
         struct interrupt_data *interrupt_data = &thread_interrupt_data(thread);
         sigcopyset(os_context_sigmask_addr(context), &interrupt_data->pending_mask);
@@ -194,7 +194,7 @@ sig_stop_for_gc_handler(int __attribute__((unused)) signal,
      * occurs below at thread_wait_until_not(STATE_STOPPED). Note that sem_post()
      * is expressly permitted in signal handlers, and set_thread_state uses it */
     set_thread_state(thread, STATE_STOPPED, 0);
-    event0("suspended");
+    event_Suspended();
 
     /* While waiting for gc to finish occupy ourselves with zeroing
      * the unused portion of the control stack to reduce conservatism.
@@ -219,7 +219,7 @@ sig_stop_for_gc_handler(int __attribute__((unused)) signal,
     sigdelset(os_context_sigmask_addr(context), SIG_STOP_FOR_GC);
 #endif
 
-    event0("resumed");
+    event_Resumed();
 
     /* The state can't go from STOPPED to DEAD because it's this thread is reading
      * its own state, hence it must be running.
@@ -419,7 +419,7 @@ void gc_stop_the_world()
 #ifdef LISP_FEATURE_NONSTOP_FOREIGN_CALL
     atomic_store(&stopping_the_world, 0);
 #endif
-    event0("/gc_stop_the_world:end");
+    event_STW_end();
 }
 
 void gc_start_the_world()

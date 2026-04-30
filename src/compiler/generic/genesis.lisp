@@ -4525,6 +4525,58 @@ static inline uword_t word_has_stickymark(uword_t word) {
                 c-const (sb-kernel::choose-layout-id type nil))))
   (terpri stream))
 
+(defun write-events (output &aux (defs sb-impl::*c-runtime-events*))
+  ;; Only 5 bits are allocated to the ID in an event record
+  (aver (<= (length defs) 32))
+  (format output "enum vmevent {~%  Event~A=0~{,~%  Event~A~}~%};~2%"
+          (caar defs) (mapcar 'car (cdr defs)))
+  (format output "#include <stdint.h>
+#define EVENTBUFMAX 400000
+extern uintptr_t *eventdata;
+extern int n_logevents;
+#ifndef should_record_event
+#define should_record_event(x) 0
+#endif~%")
+  ;; eventN = record event with N parameters
+  ;; NOTE 1: The buffer is oversized by enough to ensure that i_+N does not
+  ;; overrun, so we need not adjust the comparison of 'i_ <' by the number
+  ;; of format arguments. A more sophisticated approach would have the log
+  ;; be a ring buffer, which would work fine in most cases since the focus
+  ;; of a crash is generally on the most recent events.
+  ;; NOTE 2: Assume that pthread_self() can be cast to 'uword_t' - which is
+  ;; true for or supported platforms - and that the low 3 bits are 0 (which
+  ;; may not hold for 32-bit, but surely does for 64-bit). Hence the low 3 can
+  ;; can be used for the ID. But in fact we would like 5 bits for that, so
+  ;; left-shift an additional 2 bits. This is OK as long as the upper 2 bits
+  ;; of pthread_t are 0, which they are if it's a virtual address.
+  (flet ((count-printf-args (str &aux (count 0) (start 0))
+           (loop (let ((p (position #\% str :start start)))
+                   (setq start (cond ((not p) (return count))
+                                     ((char= (char str (1+ p)) #\%) (+ p 2))
+                                     (t (incf count) (1+ p)))))))
+         (formals (arity)
+           (if (> arity 0)
+               (format nil "~{,arg~D~}" (loop for i from 1 repeat arity collect i))
+               "")))
+    (format output "#ifdef WANT_EVENTLOG_FORMAT_STRINGS
+static char event_printf_nargs[32] = {~{~D~^,~}};
+static char *event_printf_format[] = {~{~%  ~S~^,~}~%};~%#endif~2%"
+            (mapcar (lambda (x) (count-printf-args (cadr x))) defs)
+            (mapcar 'cadr defs))
+    (dotimes (argc 7)
+      (format output "#define EVENT~D(id~A) { if(should_record_event(id)) \\
+ { int i_ = __sync_fetch_and_add(&n_logevents, ~A); if (i_ < EVENTBUFMAX) { \\
+   eventdata[i_] = ((uword_t)pthread_self() << 2) | id;~
+~{   eventdata[i_+~D] = (uword_t)arg~:*~D;~^ \\~%~} }}}~%"
+              argc (formals argc) (1+ argc) (loop for n from 1 to argc collect n)))
+    (dolist (x defs)
+      (let* ((event (car x))
+             (arity (count-printf-args (cadr x)))
+             (formals (formals arity)))
+        (format output "#define event_~A(~A) EVENT~D(Event~A~A)~%"
+                event (subseq formals (min 1 (length formals)))
+                arity event formals)))))
+
 (defparameter numeric-primitive-objects
   (remove nil ; SINGLE-FLOAT and/or the SIMD-PACKs might not exist
           (mapcar #'get-primitive-obj
@@ -4572,6 +4624,7 @@ static inline uword_t word_has_stickymark(uword_t word) {
         (out-to "cardmarks" (write-mark-array-operators stream))
         (out-to "tagnames" (write-tagnames-h stream))
         (out-to "print.inc" (write-c-print-dispatch stream))
+        (out-to "events" (write-events stream))
         (let* ((skip `(,(get-primitive-obj 'funcallable-instance)
                        ,(get-primitive-obj 'binding)
                        ,(get-primitive-obj 'catch-block)

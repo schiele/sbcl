@@ -68,9 +68,9 @@
 #include "genesis/cons.h"
 #include "genesis/vector.h"
 #include "genesis/thread.h"
-#include "atomiclog.inc"
+#include "genesis/events.h"
 
-#ifdef ATOMIC_LOGGING
+#ifdef VM_EVENT_RECORDING
 uword_t *eventdata;
 int n_logevents;
 #endif
@@ -263,10 +263,10 @@ resignal_to_lisp_thread(int signal, os_context_t *context)
  * kernel properly, so we fix it up ourselves in the
  * arch_os_get_context(..) function. -- CSR, 2002-07-23
  */
-#ifdef ATOMIC_LOGGING
+#ifdef VM_EVENT_RECORDING
 static void record_signal(int sig, void* context)
 {
-    event2("got signal %d @ pc=%p", sig, os_context_pc(context));
+    event_GotSignal(sig, os_context_pc(context));
 }
 #define RECORD_SIGNAL(sig,ctxt) if(sig!=SIGSEGV)record_signal(sig,ctxt);
 #else
@@ -1259,8 +1259,7 @@ can_handle_now(void *handler, struct interrupt_data *data,
      */
     if ((read_TLS(INTERRUPTS_ENABLED,thread) == NIL) ||
         in_leaving_without_gcing_race_p(thread)) {
-        event3("can_handle_now(%p,%d): deferred (RACE=%d)", handler, signal,
-               in_leaving_without_gcing_race_p(thread));
+        event_SigDeferred_IntDisabled(handler, signal, in_leaving_without_gcing_race_p(thread));
         store_signal_data_for_later(data,handler,signal,info,context);
         write_TLS(INTERRUPT_PENDING, LISP_T, thread);
         answer = 0;
@@ -1269,7 +1268,7 @@ can_handle_now(void *handler, struct interrupt_data *data,
      * actually use its argument for anything on x86, so this branch
      * may succeed even when context is null (gencgc alloc()) */
     else if (arch_pseudo_atomic_atomic(thread)) {
-        event2("can_handle_now(%p,%d): deferred (PA)", handler, signal);
+        event_SigDeferred_PA(handler, signal);
         store_signal_data_for_later(data,handler,signal,info,context);
         arch_set_pseudo_atomic_interrupted(thread);
         answer = 0;
@@ -1879,7 +1878,7 @@ sigabrt_handler(int __attribute__((unused)) signal,
 void
 interrupt_init(void)
 {
-#ifdef ATOMIC_LOGGING
+#ifdef VM_EVENT_RECORDING
     // If fetch_and_add gives us an index that is less than EVENTBUFMAX,
     // we assume that there is room to record an event with up to 8 arguments
     // which means the prefix, the format string, and the arguments.

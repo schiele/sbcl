@@ -10,6 +10,7 @@
  */
 
 #define _GNU_SOURCE
+#define WANT_EVENTLOG_FORMAT_STRINGS
 #include "genesis/sbcl.h"
 #include "lispobj.h"
 
@@ -281,7 +282,8 @@ static cmd flush_cmd, regs_cmd, exit_cmd, print_code, set_context_cmd;
 static cmd print_context_cmd, pte_cmd, search_cmd, hashtable_cmd;
 static cmd backtrace_cmd, threadbt_cmd, catchers_cmd;
 static cmd threads_cmd, findpath_cmd, layouts_cmd;
-#ifdef ATOMIC_LOGGING
+#ifdef VM_EVENT_RECORDING
+#include "genesis/events.h"
 static cmd events_cmd;
 #endif
 
@@ -473,7 +475,7 @@ static struct cmd {
     {"set_context", "Set the current context.", set_context_cmd},
     {"dump", "Dump memory starting at ADDRESS for COUNT words.", dump_cmd},
     {"d", "(an alias for dump)", dump_cmd},
-#ifdef ATOMIC_LOGGING
+#ifdef VM_EVENT_RECORDING
     {"events", "Dump signal-related event log", events_cmd},
 #endif
     {"exit", "Exit this instance of the monitor.", exit_cmd},
@@ -1164,8 +1166,7 @@ static int monitor_loop(char *(*getline_fun)(char*, int, FILE*),
     }
 }
 
-#ifdef ATOMIC_LOGGING
-#include "atomiclog.inc"
+#ifdef VM_EVENT_RECORDING
 char* thread_name_from_pthread(pthread_t thread) {
     static char name[64];
 #if defined LISP_FEATURE_LINUX || defined LISP_FEATURE_DARWIN
@@ -1175,12 +1176,12 @@ char* thread_name_from_pthread(pthread_t thread) {
 #endif
 }
 
-static void dump_eventlog(int fd)
+static void dump_eventlog(int fd, int decode_thread_names)
 {
     int i = 0;
     uword_t *e = eventdata;
     char buf[1024];
-    int nc, nc1; // number of chars in buffer
+    int nc, nc1=0; // number of chars in buffer
     // Define buflen to be smaller than 'buf' so that we can prefix it
     // with thread pointer and suffix it with a newline
     // without too much hassle.
@@ -1188,31 +1189,36 @@ static void dump_eventlog(int fd)
     nc = snprintf(buf, buflen, "Event log: used %d elements of %d max\n", n_logevents, EVENTBUFMAX);
     write(fd, buf, nc);
     while (i<n_logevents) { // FIXME: crashes if n_logevents exceeds max
-        char *fmt = (char*)e[i+1];
         uword_t prefix = e[i];
-        int nargs = prefix & 7;
-        void* thread_pointer = (void*)(prefix & ~7);
-        char* name = thread_name_from_pthread((pthread_t)thread_pointer);
+        int id = prefix & 0x1f;
+        int nargs = event_printf_nargs[id];
+        char *fmt;
+        if ((fmt=event_printf_format[id])==NULL) { printf("busted event log"); return; }
+        void* thread_pointer = (void*)((prefix & ~0x1f) >> 2);
+        // Don't use decode_thread_names if threads come and go, or you could get screwed
+        char* name = 0;
+        if (decode_thread_names) {
+            name = thread_name_from_pthread((pthread_t)thread_pointer);
+        }
         if (name) nc = sprintf(buf, "%s: ", name); else nc = sprintf(buf, "%p: ", thread_pointer);
         switch (nargs) {
-        default: printf("busted event log"); return;
         case 0: nc1 = snprintf(buf+nc, buflen, fmt, 0); break; // the 0 inhibits a warning
-        case 1: nc1 = snprintf(buf+nc, buflen, fmt, e[i+2]); break;
-        case 2: nc1 = snprintf(buf+nc, buflen, fmt, e[i+2], e[i+3]); break;
-        case 3: nc1 = snprintf(buf+nc, buflen, fmt, e[i+2], e[i+3], e[i+4]); break;
-        case 4: nc1 = snprintf(buf+nc, buflen, fmt, e[i+2], e[i+3], e[i+4], e[i+5]); break;
-        case 5: nc1 = snprintf(buf+nc, buflen, fmt, e[i+2], e[i+3], e[i+4], e[i+5], e[i+6]); break;
-        case 6: nc1 = snprintf(buf+nc, buflen, fmt, e[i+2], e[i+3], e[i+4], e[i+5], e[i+6],
-                               e[i+7]); break;
+        case 1: nc1 = snprintf(buf+nc, buflen, fmt, e[i+1]); break;
+        case 2: nc1 = snprintf(buf+nc, buflen, fmt, e[i+1], e[i+2]); break;
+        case 3: nc1 = snprintf(buf+nc, buflen, fmt, e[i+1], e[i+2], e[i+3]); break;
+        case 4: nc1 = snprintf(buf+nc, buflen, fmt, e[i+1], e[i+2], e[i+3], e[i+4]); break;
+        case 5: nc1 = snprintf(buf+nc, buflen, fmt, e[i+1], e[i+2], e[i+3], e[i+4], e[i+5]); break;
+        case 6: nc1 = snprintf(buf+nc, buflen, fmt, e[i+1], e[i+2], e[i+3], e[i+4], e[i+5],
+                               e[i+6]); break;
         }
 #undef buflen
         buf[nc+nc1] = '\n';
         write(fd, buf, 1+nc+nc1);
-        i += nargs + 2;
+        i += nargs + 1;
     }
 }
 static int events_cmd(__attribute__((unused)) char **ptr, iochannel_t io) {
-    dump_eventlog(fileno(io->out));
+    dump_eventlog(fileno(io->out), 0);
     return 0;
 }
 #endif
