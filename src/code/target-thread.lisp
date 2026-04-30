@@ -13,6 +13,7 @@
 
 ;;; symbols to protect from tree-shaker, for some tests
 (export '(%thread-local-references
+          %thread-from-tid
           get-spinlock
           release-spinlock
           spinlock
@@ -293,6 +294,13 @@ an error in that case."
          (aver (not (avl-find addr old)))
          (let ((new (avl-insert old addr ,thread)))
            (when (eq old (setq old (sb-ext:cas *all-threads* old new))) (return)))))))
+
+(defun %thread-from-tid (os-tid)
+  (declare (type (unsigned-byte 32) os-tid))
+  (avltree-filter (lambda (node &aux (thread (avlnode-data node)))
+                    (when (= (thread-os-tid thread) os-tid)
+                      (return-from %thread-from-tid thread)))
+                  *all-threads*))
 
 (defun vmthread-name (vmthread)
   (binding* ((node (avl-find (vmthread-id->addr vmthread) *all-threads*) :exit-if-null)

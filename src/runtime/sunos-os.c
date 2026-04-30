@@ -24,6 +24,7 @@
 
 #include "gc.h"
 
+// Allegedly this could use thr_self() or _lwp_self() both of which are 32-bit
 int sb_GetTID() { return 0; } // this doesn't affect anything
 
 void os_init() {}

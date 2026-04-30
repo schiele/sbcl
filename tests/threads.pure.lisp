@@ -317,3 +317,8 @@
       (assert (string= (first results) "newname"))
       (assert (find "finalizer" (second results) :test 'string=))
       (assert (find "testme" (second results) :test 'string=)))))
+
+(with-test (:name :thread-from-tid)
+  (let ((tid (sb-thread:thread-os-tid *current-thread*)))
+    (when (plusp tid) ; SunOS returns 0
+      (assert (eq (sb-thread:%thread-from-tid tid) *current-thread*)))))

@@ -27,6 +27,18 @@
 ;;; compete for a mutex, the pthread code seems to do a better job at reducing
 ;;; cycles spent in the OS.
 
+;;; Mutexes could be equipped with telemetry compatible with absl::Mutex.
+;;; Specifically, we'd like to know the "Induced wait" which is the sum of CPU cycles
+;;; a lock owner caused other threads to wait. It's tricky to report because measurement
+;;; is performed in the waiting thread (the "victim" of wait) but reporting should occur
+;;; in the "culprit" thread so that the call stack accurately reflects the function
+;;; whose fault it is that there was induced wait time. absl mutex can do this because
+;;; it is acutely aware of the queue of waiters, and it knows which waiter it wakes.
+;;; SBCL mutex can't, because we defer everything to the OS. But the delay time can be
+;;; handed off to -some- waker using a slot of the mutex, which stastically should result
+;;; in the right effect. To keep struct size unchanged, the owner ID and futex word
+;;; must be packed into a single raw slot. (None of this is implemented yet!)
+
 (sb-xc:defstruct (mutex (:constructor make-mutex (&key name))
                         (:copier nil))
   "Mutex type."
@@ -110,6 +122,14 @@ in future versions."
   ;; This value is 0 if the thread is not considered alive, though the pthread
   ;; may be running its termination code (unlinking from all_threads etc)
   (primitive-thread 0 :type sb-vm:word)
+  ;; It is absolutely critical that our OS thread identifiers take no more than 32 bits
+  ;; if #+sb-futex is present. So don't go changing this slot just because you feel like.
+  ;; * macOS (mach_port_t): unsigned int
+  ;; * FreeBSD (thr_self): thr_self writes a long to its its pointer arg,
+  ;;     however LWP IDs occupy a smaller range that can be cast to int
+  ;; * NetBSD (_lwp_self): lwpid_t which is int32_t
+  ;; * Linux (gettid): 32-bit pid_t
+  ;; * Windows (GetCurrentThreadId): 32-bit DWORD
   ;; Caution: the identified thread may have exited by the time you've read this slot
   (os-tid 0 :type (unsigned-byte 32) :read-only t)
   ;; This is a redundant copy of the pthread identifier from the primitive thread.
