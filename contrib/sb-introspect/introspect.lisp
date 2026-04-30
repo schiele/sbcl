@@ -223,6 +223,7 @@ Public definition TYPEs:
     :SYMBOL-MACRO
     :TYPE
     :ALIEN-TYPE
+    :ALIEN-CALLBACK
     :VARIABLE
     :DECLARATION
 
@@ -406,6 +407,13 @@ will return NIL."
         (let ((loc (info :source-location type name)))
           (and loc
                (translate-source-location loc))))
+       (:alien-callback
+        (let ((cb (gethash name sb-alien::*alien-callables*)))
+          (when cb
+            (let ((index (sb-alien::alien-callback-index cb)))
+              (when (and index
+                         (array-in-bounds-p sb-alien::*alien-callback-functions* index))
+                (find-definition-source (aref sb-alien::*alien-callback-functions* index)))))))
        ((:source-transform)
         (let* ((transform-fun
                  (or (info :function :source-transform name)
