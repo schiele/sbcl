@@ -745,11 +745,14 @@
 (with-test (:name alien-variable :skipped-on :no-source-locs)
   (assert (matchp-name :variable 'cl-user::test-alien-var 32)))
 
+(with-test (:name alien-callable :skipped-on :no-source-locs)
+  (assert (matchp-name :alien-callback 'cl-user::alien-comparator 33)))
+
 (with-test (:name condition-slot-reader :skipped-on :no-source-locs)
-  (matchp-name :method 'cl-user::condition-slot-reader 33))
+  (matchp-name :method 'cl-user::condition-slot-reader 34))
 
 (with-test (:name condition-slot-writer :skipped-on :no-source-locs)
-  (matchp-name :method 'cl-user::condition-slot-writer 33))
+  (matchp-name :method 'cl-user::condition-slot-writer 34))
 
 (deftest function-with-a-local-function
     (sb-introspect:definition-source-form-number
@@ -825,6 +828,7 @@
     :symbol-macro
     :type
     :alien-type
+    :alien-callback
     :variable
     :declaration
     :optimizer

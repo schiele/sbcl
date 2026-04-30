@@ -85,6 +85,11 @@
 
 (sb-alien:define-alien-variable ("errno" test-alien-var) sb-alien:int)
 
+(sb-alien:define-alien-callable alien-comparator sb-alien:int
+  ((p1 (* t)) (p2 (* t)))
+  (- (sb-alien:deref (sb-alien:cast p1 (* sb-alien:int)))
+     (sb-alien:deref (sb-alien:cast p2 (* sb-alien:int)))))
+
 (define-condition test-condition (error)
   ((a :reader condition-slot-reader
       :writer condition-slot-writer)))
