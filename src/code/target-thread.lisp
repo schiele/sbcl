@@ -768,21 +768,20 @@ returns NIL each time."
     ;;
   #+sb-futex
   (symbol-macrolet ((val (mutex-state mutex)))
-      (let ((c (sb-ext:cas val 0 1))) ; available -> taken
-        (unless (= c 0) ; Got it right off the bat?
+    (let ((c (sb-ext:cas val 0 1))) ; available -> taken
+      (unless (= c 0) ; Got it right off the bat?
+        (with-pinned-objects (mutex)
           (nlx-protect
            (if (not stop-sec)
                (loop                    ; untimed
                      ;; Mark it as contested, and sleep, unless it is now in state 0.
                      (when (or (eql c 2) (/= 0 (sb-ext:cas val 1 2)))
-                       (with-pinned-objects (mutex)
-                         (futex-wait (mutex-state-address mutex) 2 -1 0)))
+                       (futex-wait (mutex-state-address mutex) 2 -1 0))
                      ;; Try to get it, still marking it as contested.
                      (when (= 0 (setq c (sb-ext:cas val 0 2))) (return))) ; win
                (loop             ; same as above but check for timeout
                      (when (or (eql c 2) (/= 0 (sb-ext:cas val 1 2)))
-                       (if (eql 1 (with-pinned-objects (mutex)
-                                    (futex-wait (mutex-state-address mutex) 2 to-sec to-usec)))
+                       (if (eql 1 (futex-wait (mutex-state-address mutex) 2 to-sec to-usec))
                            ;; -1 = EWOULDBLOCK, possibly spurious wakeup
                            ;;  0 = normal wakeup
                            ;;  1 = ETIMEDOUT ***DONE***
@@ -793,10 +792,9 @@ returns NIL each time."
                      (setf (values to-sec to-usec)
                            (sb-impl::relative-decoded-times stop-sec stop-usec))))
            ;; Unwinding because futex-wait allows interrupts, wake up another futex
-           (with-pinned-objects (mutex)
-             (futex-wake (mutex-state-address mutex) 1)))))
-      (setf (mutex-%owner mutex) (current-vmthread-id))
-      t)
+           (futex-wake (mutex-state-address mutex) 1)))))
+    (setf (mutex-%owner mutex) (current-vmthread-id))
+    t)
 
   #-sb-futex
   (flet ((cas ()
