@@ -344,7 +344,9 @@
                        do (binding* (((index number-count)
                                       (funcall decoder (read-var-integerf packed offset)))
                                      (name (funcall lookup index)))
-                            (loop repeat number-count
-                                  for form-number = (read-var-integerf packed offset)
-                                  do
-                                  (funcall function kind name form-number)))))))))
+                            (let ((prev 0))
+                              (loop repeat number-count
+                                    for form-number = (+ (read-var-integerf packed offset) prev)
+                                    do
+                                    (funcall function kind name form-number)
+                                    (setf prev form-number))))))))))
