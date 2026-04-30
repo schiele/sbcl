@@ -713,7 +713,6 @@
   ;; other functionality not needed for cold init, moved
   ;; to warm init to reduce peak memory requirement in
   ;; cold init
-  "src/code/describe"
 
   "src/code/describe-policy"
   "src/code/inspect"
@@ -722,6 +721,7 @@
   "src/code/step"
   "src/code/warm-lib"
   "src/code/alien-callback"
+  "src/code/describe"
   "src/code/run-program"
   #+win32 "src/code/warm-mswin"
   "src/code/traceroot"

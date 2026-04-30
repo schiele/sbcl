@@ -316,10 +316,13 @@
   ;; if one exists. Maybe not all the exports, etc, but the package
   ;; documentation.
   (describe-function symbol nil stream)
+  (describe-alien-callback symbol stream)
+
   (describe-class symbol nil stream)
 
   ;; Type specifier
   (describe-type symbol stream)
+  (describe-alien-type symbol stream)
 
   ;; Declaration specifier
   (describe-declaration symbol stream)
@@ -752,6 +755,23 @@
            (describe-block (stream "~A names a deprecated type" name)
              (describe-deprecation 'type name stream)
              (describe-documentation name 'type stream (eq t fun)))))))
+
+(defun describe-alien-type (name stream)
+  (let ((type (ignore-errors (sb-alien-internals:parse-alien-type name nil))))
+    (when type
+      (describe-block (stream "~A names an alien type:" name)
+        (format stream "~@:_Expansion: ~S" type)))))
+
+(defun describe-alien-callback (name stream)
+  (let ((cb (gethash name sb-alien::*alien-callables*)))
+    (when cb
+      (describe-block (stream "~A names an alien callback:" name)
+        (format stream "~@:_Type: ~S" (sb-alien::alien-value-type cb))
+        (let ((index (sb-alien::alien-callback-index cb)))
+          (when (and index
+                     (array-in-bounds-p sb-alien::*alien-callback-functions* index))
+            (let ((fun (aref sb-alien::*alien-callback-functions* index)))
+              (describe-function-source fun stream))))))))
 
 (defun describe-declaration (name stream)
   (let ((kind (cond
