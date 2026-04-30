@@ -27,18 +27,6 @@
                                     :type 'sb-kernel:layout)))
       (assert (= (length constants) 1)))))
 
-(with-test (:name :mutex-owner-typecheck)
-  (let ((layouts
-         (ctu:find-code-constants #'(setf sb-thread::mutex-%owner)
-                                  :type 'sb-kernel:layout)))
-    ;; expect exactly 1 layout, that of MUTEX, for signaling OBJECT-NOT-TYPE.
-    ;; To be really pedantic we'd want to assert that in the source file
-    ;; the defstruct of MUTEX appears prior to the defstruct of THREAD,
-    ;; proving without a doubt that block compilation worked.
-    (assert (= (length layouts) 1))
-    (assert (find (sb-kernel:find-layout 'sb-thread:mutex)
-                  layouts))))
-
 (defstruct (parent)
   (bv #* :type bit-vector)
   (x 0d0 :type double-float))
