@@ -854,6 +854,12 @@
      (note-float-location 'sqrt vop x)
      (inst sqrtss y x)))
 
+
+(deftransform conjugate ((number) (:or ((complex-double-float) *)
+                                       ((complex-single-float) *)) *
+                         :vop t)
+  t)
+
 (macrolet ((frob ((name translate sc type) &body body)
              `(define-vop (,name)
                   (:args (x :scs (,sc) :target y))

@@ -413,6 +413,12 @@
   (frob %negate/complex-double-float s-fneg %negate
         complex-double-reg complex-double-float :2d))
 
+
+(deftransform conjugate ((number) (:or ((complex-double-float) *)
+                                       ((complex-single-float) *)) *
+                         :vop t)
+  t)
+
 (macrolet ((frob (name sc type real-inst-size complex-inst-size)
              `(define-vop (,name)
                 (:args (x :scs (,sc)))

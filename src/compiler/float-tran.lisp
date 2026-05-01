@@ -689,7 +689,8 @@
 (deftransform conjugate ((x) (real))
   'x)
 
-(deftransform conjugate ((x) (complex))
+(deftransform conjugate ((x) (complex) * :node node)
+  (delay-ir1-transform node :ir1-phases)
   `(complex (realpart x) (- (imagpart x))))
 
 ;;; The number is of type REAL.
