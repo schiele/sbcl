@@ -900,7 +900,7 @@ void lispmutex_wake_waiter()
                      1 +
 #endif
         (int*)&m->uw_state;
-    *word = 0; // slam 0 in, meaning uncontested
+    *word = 0; // slam 0 in, meaning uncontended
     futex_wake(word, 1);
 }
 #endif

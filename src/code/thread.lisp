@@ -188,7 +188,7 @@ HOLDING-MUTEX-P."
 and the MUTEX is not immediately available, sleep until it is available.
 
 If TIMEOUT is given, it specifies a relative timeout, in seconds, on how long
-the system should try to acquire the lock in the contested case.
+the system should try to acquire the lock in the contended case.
 
 If the mutex isn't acquired successfully due to either WAIT-P or TIMEOUT, the
 body is not executed, and WITH-MUTEX returns NIL.
@@ -249,7 +249,7 @@ If WAIT-P is true (the default), and the MUTEX is not immediately available or
 held by the current thread, sleep until it is available.
 
 If TIMEOUT is given, it specifies a relative timeout, in seconds, on how long
-the system should try to acquire the lock in the contested case.
+the system should try to acquire the lock in the contended case.
 
 If the mutex isn't acquired successfully due to either WAIT-P or TIMEOUT, the
 body is not executed, and WITH-RECURSIVE-LOCK returns NIL.

@@ -39,7 +39,7 @@ COMPARE-AND-SWAP, and must initially hold NIL.
 WITH-CAS-LOCK is suitable mostly when the critical section needing protection
 is very small, and cost of allocating a separate lock object would be
 prohibitive. While it is the most lightweight locking constructed offered by
-SBCL, it is also the least scalable if the section is heavily contested or
+SBCL, it is also the least scalable if the section is heavily contended or
 long.
 
 WITH-CAS-LOCK can be entered recursively."
@@ -266,7 +266,7 @@ a simple-string (not necessarily unique) or NIL."
   (let ((name (mutex-name mutex)))
     (print-unreadable-object (mutex stream :type t :identity (not name))
       #+sb-futex
-      (format stream "~@[~S ~]~[free~;taken~;contested~:;err~] owner=~X"
+      (format stream "~@[~S ~]~[free~;taken~;contended~:;err~] owner=~X"
               name (mutex-state mutex) (vmthread-name (mutex-%owner mutex)))
       #-sb-futex
       (let ((owner (mutex-owner mutex))
@@ -782,10 +782,10 @@ returns NIL each time."
           (nlx-protect
            (if (not stop-sec)
                (loop                    ; untimed
-                     ;; Mark it as contested, and sleep, unless it is now in state 0.
+                     ;; Mark it as contended, and sleep, unless it is now in state 0.
                      (when (or (eql c 2) (/= 0 (sb-ext:cas val 1 2)))
                        (futex-wait (mutex-state-address mutex) 2 -1 0))
-                     ;; Try to get it, still marking it as contested.
+                     ;; Try to get it, still marking it as contended.
                      (when (= 0 (setq c (sb-ext:cas val 0 2))) (return))) ; win
                (loop             ; same as above but check for timeout
                      (when (or (eql c 2) (/= 0 (sb-ext:cas val 1 2)))
@@ -865,11 +865,11 @@ returns NIL each time."
            (c (sb-ext:cas val 0 1))) ; available -> taken
       (unless (= c 0) ; Got it right off the bat?
         (loop
-          ;; Mark it as contested, and sleep, unless it is now in state 0.
+          ;; Mark it as contended, and sleep, unless it is now in state 0.
           (when (or (eql c 2) (/= 0 (sb-ext:cas val 1 2)))
             (with-pinned-objects (mutex)
               (fast-futex-wait (mutex-state-address mutex) 2 -1 0)))
-          ;; Try to get it, still marking it as contested.
+          ;; Try to get it, still marking it as contended.
           (when (= 0 (setq c (sb-ext:cas val 0 2))) (return)))))) ; win
 
   (defun wait-for-mutex-algorithm-2 (mutex)
@@ -941,7 +941,7 @@ returns NIL each time."
 the mutex is not immediately available, sleep until it is available.
 
 If TIMEOUT is given, it specifies a relative timeout, in seconds, on how long
-GRAB-MUTEX should try to acquire the lock in the contested case.
+GRAB-MUTEX should try to acquire the lock in the contended case.
 
 If GRAB-MUTEX returns T, the lock acquisition was successful. In case of WAITP
 being NIL, or an expired TIMEOUT, GRAB-MUTEX may also return NIL which denotes

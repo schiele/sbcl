@@ -451,7 +451,7 @@ static int gather_trace_from_frame(struct thread* thread, uword_t* fp,
 
 #define LOCKED_BY_SELF  1
 #define LOCKED_BY_OTHER 2
-#define LOCK_CONTESTED  (LOCKED_BY_SELF|LOCKED_BY_OTHER)
+#define LOCK_CONTENDED  (LOCKED_BY_SELF|LOCKED_BY_OTHER)
 
 static void* initialize_sprof_data(struct thread* thread)
 {
@@ -481,14 +481,14 @@ static struct sprof_data* enlarge_buffer(struct sprof_data* current,
 #define SPROF_LOCK(th) thread_extra_data(th)->sprof_lock
 
 #ifdef LISP_FEATURE_SB_THREAD
-/* If this thread acquired an uncontested lock (old == LOCKED_BY_SELF), release it.
+/* If this thread acquired an uncontended lock (old == LOCKED_BY_SELF), release it.
  * If this thread didn't acquire the lock (old == 0 or old == 2), do nothing.
- * The only interesting case is LOCK_CONTESTED */
+ * The only interesting case is LOCK_CONTENDED */
 #define RELEASE_LOCK(th) \
   int oldval = __sync_val_compare_and_swap(&SPROF_LOCK(th), LOCKED_BY_SELF, 0); \
-  if (oldval == LOCK_CONTESTED) { \
-        oldval = __sync_val_compare_and_swap(&SPROF_LOCK(th), LOCK_CONTESTED, LOCKED_BY_OTHER); \
-        gc_assert(oldval == LOCK_CONTESTED); \
+  if (oldval == LOCK_CONTENDED) { \
+        oldval = __sync_val_compare_and_swap(&SPROF_LOCK(th), LOCK_CONTENDED, LOCKED_BY_OTHER); \
+        gc_assert(oldval == LOCK_CONTENDED); \
         os_sem_post(&thread_extra_data(th)->sprof_sem); \
     }
 #else

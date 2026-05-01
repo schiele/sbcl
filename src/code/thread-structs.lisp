@@ -63,7 +63,7 @@
   (name nil :type (or null string))
   ;; For WITH-CAS-LOCK: because CONDITION-WAIT must be able to call
   ;; %WAITQUEUE-WAKEUP without re-aquiring the mutex, we need a separate
-  ;; lock. In most cases this should be uncontested thanks to the mutex --
+  ;; lock. In most cases this should be uncontended thanks to the mutex --
   ;; the only case where that might not be true is when CONDITION-WAIT
   ;; unwinds and %WAITQUEUE-DROP is called.
   . #+sb-futex nil

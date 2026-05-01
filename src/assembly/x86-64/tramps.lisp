@@ -309,8 +309,8 @@
   (inst mov rax-tn (thread-tls-ea (load-time-tls-offset '*current-mutex*)))
   (inst mov :qword (mutex-slot rax-tn %owner) 0)
   (inst dec :lock :byte (mutex-slot rax-tn state))
-  (inst jmp :z uncontested) ; if ZF then previous value was 1, no waiters
+  (inst jmp :z uncontended) ; if ZF then previous value was 1, no waiters
   (inst call (make-fixup 'mutex-wake-waiter :assembly-routine))
-  uncontested
+  uncontended
   (inst pop rax-tn))
 ) ; end PROGN

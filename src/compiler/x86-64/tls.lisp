@@ -516,13 +516,13 @@
              (tls-cell (thread-tls-ea tls-index)))
         #+ultrafutex
         (when (eq symbol '*current-mutex*)
-          (let ((uncontested (gen-label)))
+          (let ((uncontended (gen-label)))
             (inst mov temp tls-cell) ; load the current value
             (inst mov :qword (mutex-slot temp %owner) 0)
             (inst dec :lock :byte (mutex-slot temp state))
-            (inst jmp :z uncontested) ; if ZF then previous value was 1, no waiters
+            (inst jmp :z uncontended) ; if ZF then previous value was 1, no waiters
             (invoke-asm-routine 'call 'mutex-wake-waiter vop)
-            (emit-label uncontested)))
+            (emit-label uncontended)))
 
         (inst sub bsp (* binding-size n-word-bytes))
 
