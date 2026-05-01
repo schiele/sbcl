@@ -718,7 +718,13 @@
         (= new (sb-posix:cfgetospeed termios))))
   t)
 
+;;; openpty is not in libc on many Linux distros. Instead it is in /usr/lib/libutil.so
+;;; which is not linked because nothing else needs it. So maybe skip a test
 #-win32
+(when (sb-sys:find-dynamic-foreign-symbol-address "openpty")
+  (push :have-openpty *features*))
+
+#+have-openpty
 (deftest tcsetattr.smoke.pty
     (let (master-fd slave-fd)
       (unwind-protect
