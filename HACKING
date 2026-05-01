@@ -3,7 +3,7 @@ SBCL Hacking Guide
   (This is not a most actively maintained file, but recommended
   reading anyways.)
 
-Table of Contests
+Table of Contents
 
 * Modifying
 * Patch Submissions
