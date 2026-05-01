@@ -309,6 +309,8 @@
         ;; all versions that support arm, so always enable them there
         (when (target-featurep '(:and :sb-thread (:or :linux :freebsd :openbsd (:and :darwin :arm64))))
           (pushnew :sb-futex sb-xc:*features*))
+        (when (target-featurep '(:and :64-bit :sb-futex :little-endian))
+          (pushnew :bitpacked-mutex sb-xc:*features*))
         (when (target-featurep '(:and :sb-thread (:or :arm64 :x86-64)))
           (pushnew :system-tlabs sb-xc:*features*))
         (when (target-featurep '(:and (:or :permgen :immobile-space) :x86-64))

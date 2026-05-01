@@ -42,16 +42,24 @@
 (sb-xc:defstruct (mutex (:constructor make-mutex (&key name))
                         (:copier nil))
   "Mutex type."
-  #+sb-futex (state 0 :type sb-vm:word)
+  ;; If #+bitpacked-mutex then the upper half SB-VM:WORD is owner (as a kernel TID)
+  ;; and the low 32 bits are the futex word which takes a value from {0,1,2}.
+  ;; If #-bitpacked-mutex then the entire state word is the futex word.
+  #+sb-futex (%state 0 :type sb-vm:word)
   ;; If adding slots between STATE and NAME, please see futex_name() in linux_os.c
   ;; which attempts to divine a string from a futex word address.
   (name   nil :type (or null simple-string))
+  #+bitpacked-mutex (induced-wait 0 :type sb-vm:word)
   ;; The owner is a non-pointer so that GC pages containing mutexes do not get dirtied
   ;; with mutex ownership change. The natural representation of this is SB-VM:WORD
   ;; but the "funny fixnum" representation - i.e. N_WORD_BITS bits of significance, but
   ;; cast as fixnum when read - avoids consing on 32-bit builds, and also not all of them
   ;; implement RAW-INSTANCE-CAS which would be otherwise needed.
-  (%owner 0 :type fixnum))
+  #-bitpacked-mutex (%owner 0 :type fixnum))
+
+(defmacro mutex-state (mu)
+  #-bitpacked-mutex `(mutex-%state ,mu)
+  #+bitpacked-mutex `(logand (mutex-%state ,mu) 3))
 
 (sb-xc:defstruct (waitqueue (:copier nil) (:constructor make-waitqueue (&key name)))
   "Waitqueue type."

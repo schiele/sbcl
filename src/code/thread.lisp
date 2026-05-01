@@ -24,6 +24,10 @@ any time."
 (setf (documentation '*current-thread* 'variable)
       "Bound in each thread to the thread itself.")
 
+#+bitpacked-mutex
+(progn (defmacro mutex-%owner (mu) `(owner-tid-from-word (mutex-%state ,mu)))
+       (defmacro owner-tid-from-word (word) `(ash ,word -32)))
+
 (defun mutex-value (mutex)
   "Current owner of the mutex, NIL if the mutex is free. May return a
 stale value, use MUTEX-OWNER instead."
@@ -46,16 +50,20 @@ stale value, use MUTEX-OWNER instead."
 ;;; representation so that on 32-bit builds we never cons when reading the slot.
 ;;; I'm not sure where consing was happening, but it did, which caused
 ;;; failure of the (:no-consing :mutex) test.
+#-bitpacked-mutex
+(progn
 (defmacro current-vmthread-id ()
   '(sb-ext:truly-the fixnum (%make-lisp-obj (current-thread-sap-int))))
 (defmacro vmthread-id->addr (x) `(get-lisp-obj-address ,x))
+)
 
 (declaim (inline holding-mutex-p))
 (defun holding-mutex-p (mutex)
   "Test whether the current thread is holding MUTEX."
   ;; This is about the only use for which a stale value of owner is
   ;; sufficient.
-  (= (mutex-%owner mutex) (current-vmthread-id)))
+  (= (mutex-%owner mutex) #+bitpacked-mutex (thread-os-tid *current-thread*)
+                          #-bitpacked-mutex (current-vmthread-id)))
 
 (defun mutex-owner (mutex)
   "Current owner of the mutex, NIL if the mutex is free. Naturally,
@@ -65,10 +73,12 @@ testing whether the current thread is holding a mutex see
 HOLDING-MUTEX-P."
   ;; Make sure to get the current value.
   (barrier (:read))
-  (let ((vmthread (mutex-%owner mutex)))
-    (cond ((= vmthread (current-vmthread-id)) *current-thread*)
-          ((= vmthread 0) nil)
-          (t (mutex-owner-lookup vmthread)))))
+  (let ((self #+bitpacked-mutex (thread-os-tid *current-thread*)
+              #-bitpacked-mutex (current-vmthread-id))
+        (owner (mutex-%owner mutex)))
+    (cond ((= owner self) *current-thread*)
+          ((= owner 0) nil)
+          (t (mutex-owner-lookup owner)))))
 
 (defsetf mutex-value set-mutex-value)
 

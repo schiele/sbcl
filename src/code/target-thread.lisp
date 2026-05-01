@@ -302,6 +302,8 @@ an error in that case."
                       (return-from %thread-from-tid thread)))
                   *all-threads*))
 
+#-bitpacked-mutex
+(progn
 (defun vmthread-name (vmthread)
   (binding* ((node (avl-find (vmthread-id->addr vmthread) *all-threads*) :exit-if-null)
              (thread (avlnode-data node) :exit-if-null)
@@ -334,7 +336,17 @@ an error in that case."
          ;; If people don't like seeing it, we could return instead
          ;;   (LOAD-TIME-VALUE (%make-thread "dead-thread" nil nil))
          ;; indicating that you observed a value of %OWNER which no longer exists.
-         (t :thread-dead)))
+         (t :thread-dead))))
+
+#+bitpacked-mutex
+(progn
+(defmacro pack-mutex-state (state owner) `(logior (ash ,owner 32) ,state))
+(defun vmthread-name (os-tid)
+  (or (awhen (%thread-from-tid os-tid) (thread-name it)) os-tid))
+(defun mutex-owner-lookup (os-tid)
+  (cond ((%thread-from-tid os-tid))
+        ((= os-tid 0) nil)
+        (t :thread-dead))))
 
 (defun %list-all-threads ()
   ;; No lock needed, just an atomic read, since tree mutations can't happen.
@@ -504,7 +516,7 @@ See also: RETURN-FROM-THREAD and SB-EXT:EXIT."
         ;; which means 64-bit big-endian needs to add 4 bytes to get to the low half
         ;; of the slot, since we lack 32-bit raw slots.
         :structure mutex
-        :slot state
+        :slot %state
         :byte-offset (+ #+(and 64-bit big-endian) 4))
       (define-structure-slot-addressor waitqueue-token-address
         :structure waitqueue
@@ -567,10 +579,12 @@ See also: RETURN-FROM-THREAD and SB-EXT:EXIT."
     (labels ((detect-deadlock (lock limit)
                (declare (fixnum limit))
                (barrier (:read))
-               (let ((other-vmthread-id (mutex-%owner lock)))
+               (let ((this-thread #+bitpacked-mutex (thread-os-tid *current-thread*)
+                                  #-bitpacked-mutex (current-vmthread-id))
+                     (other-vmthread-id (mutex-%owner lock)))
                  (cond ((= limit 0) nil)
                        ((= other-vmthread-id 0) nil)
-                       ((= (current-vmthread-id) other-vmthread-id)
+                       ((= this-thread other-vmthread-id)
                         ;; We're now committed to signaling the
                         ;; error and breaking the deadlock, so
                         ;; mark us as no longer waiting on the
@@ -733,7 +747,14 @@ returns NIL each time."
 (declaim (inline %try-mutex))
 (defun %try-mutex (mutex)
   (declare (type mutex mutex) (optimize (speed 3)))
-  #+sb-futex
+  #+bitpacked-mutex
+  (let* ((new (pack-mutex-state 1 (thread-os-tid *current-thread*)))
+         (old (sb-ext:cas (mutex-%state mutex) 0 new)))
+    (cond ((= old 0) t)
+          ((= (owner-tid-from-word old) (owner-tid-from-word new))
+           (error "Recursive lock attempt ~S." mutex))))
+
+  #+(and sb-futex (not bitpacked-mutex))
   ;; From the Mutex 2 algorithm from "Futexes are Tricky" by Ulrich Drepper.
   (let ((id (current-vmthread-id)))
     (cond ((= (sb-ext:cas (mutex-state mutex) 0 1) 0)
@@ -758,10 +779,11 @@ returns NIL each time."
 ;;; memory aid: this is "pthread_mutex_timedlock" without the pthread
 ;;; and no messing about with *DEADLINE* or deadlocks. It's just locking.
 #+sb-thread
-(defun %mutex-timedlock (mutex to-sec to-usec stop-sec stop-usec)
+(defun %mutex-timedlock (mutex to-sec to-usec stop-sec stop-usec
+                               &aux (os-tid (thread-os-tid *current-thread*)))
   (declare (type mutex mutex) (optimize (speed 3)))
   (declare (sb-ext:muffle-conditions sb-ext:compiler-note))
-  (declare (ignorable to-sec to-usec))
+  (declare (ignorable to-sec to-usec os-tid))
     ;; This is a fairly direct translation of the Mutex 2 algorithm from
     ;; "Futexes are Tricky" by Ulrich Drepper.
     ;;
@@ -775,33 +797,42 @@ returns NIL each time."
     ;; }
     ;;
   #+sb-futex
-  (symbol-macrolet ((val (mutex-state mutex)))
-    (let ((c (sb-ext:cas val 0 1))) ; available -> taken
+  (symbol-macrolet
+      ((val (mutex-%state mutex))
+       . #+bitpacked-mutex
+         ((cas-1->2 (sb-ext:cas (sap-ref-32 (int-sap (mutex-state-address mutex)) 0) 1 2))
+          (owned (pack-mutex-state 1 os-tid))
+          (contended (pack-mutex-state 2 os-tid))
+          (contended-p (eql (logand c 3) 2)))
+         #-bitpacked-mutex
+         ((cas-1->2 (sb-ext:cas (mutex-%state mutex) 1 2))
+          (owned 1) (contended 2) (contended-p (eql c 2))))
+    (let ((c (sb-ext:cas val 0 owned))) ; available -> taken
       (unless (= c 0) ; Got it right off the bat?
         (with-pinned-objects (mutex)
           (nlx-protect
            (if (not stop-sec)
                (loop                    ; untimed
                      ;; Mark it as contended, and sleep, unless it is now in state 0.
-                     (when (or (eql c 2) (/= 0 (sb-ext:cas val 1 2)))
+                     (when (or contended-p (/= 0 cas-1->2))
                        (futex-wait (mutex-state-address mutex) 2 -1 0))
                      ;; Try to get it, still marking it as contended.
-                     (when (= 0 (setq c (sb-ext:cas val 0 2))) (return))) ; win
+                     (when (= 0 (setq c (sb-ext:cas val 0 contended))) (return))) ; win
                (loop             ; same as above but check for timeout
-                     (when (or (eql c 2) (/= 0 (sb-ext:cas val 1 2)))
+                     (when (or contended-p (/= 0 cas-1->2))
                        (if (eql 1 (futex-wait (mutex-state-address mutex) 2 to-sec to-usec))
                            ;; -1 = EWOULDBLOCK, possibly spurious wakeup
                            ;;  0 = normal wakeup
                            ;;  1 = ETIMEDOUT ***DONE***
                            ;;  2 = EINTR, a spurious wakeup
                            (return-from %mutex-timedlock nil)))
-                     (when (= 0 (setq c (sb-ext:cas val 0 2))) (return)) ; win
+                     (when (= 0 (setq c (sb-ext:cas val 0 contended))) (return)) ; win
                      ;; Update timeout
                      (setf (values to-sec to-usec)
                            (sb-impl::relative-decoded-times stop-sec stop-usec))))
            ;; Unwinding because futex-wait allows interrupts, wake up another futex
            (futex-wake (mutex-state-address mutex) 1)))))
-    (setf (mutex-%owner mutex) (current-vmthread-id))
+    #-bitpacked-mutex (setf (mutex-%owner mutex) (current-vmthread-id))
     t)
 
   #-sb-futex
@@ -997,6 +1028,37 @@ The IF-NOT-OWNER keyword dictates behavior when the current thread does not own 
 mutex. Do nothing and silently return if :PUNT, signal a WARNING or ERROR if :WARN
 or :ERROR respectively, or release the mutex anyway if :FORCE."
   (declare (type mutex mutex))
+  #+bitpacked-mutex
+  (with-pinned-objects (mutex)
+    ;; A read barrier is strictly needed only in an erroneous call to RELEASE. In the non-
+    ;; bitpacked logic, CAS of "self" to 0 avoids the problem of thinking that this thread
+    ;; is the owner when it isn't. Without the CAS, supposing I thought I was the owning
+    ;; thread due to failing to observe a different thread's store- that would be horrible.
+    (let ((owner (owner-tid-from-word (progn (barrier (:read)) (mutex-%state mutex)))))
+      (when (= owner (thread-os-tid *current-thread*))
+        (let* ((old (pack-mutex-state 1 owner))
+               (actual (sb-ext:atomic-decf (mutex-%state mutex) old)))
+          (unless (eql actual old)
+            (setf (mutex-%state mutex) 0)
+            ;; The compiler is not going to reorder the above store after the syscall,
+            ;; so this barrier is just technical pedantry / documentation.
+            (sb-thread:barrier (:write))
+            (futex-wake (mutex-state-address mutex) 1)))
+        (return-from release-mutex nil))
+      ;; srsly? why would you not even want to know that your code is bad???
+      (when (eq if-not-owner :punt) (return-from release-mutex nil))
+      (ecase if-not-owner
+        (:force)
+        ((:warn :error)
+         (funcall (if (eq if-not-owner :warn) 'warn 'error)
+                  "Releasing ~S, owned by another thread: ~S" mutex (vmthread-name owner))))
+      ;; Clear the whole control word and do a futex_wake. Don't bother trying to optimize
+      ;; the uncontended case because your code is already wrong if you get here.
+      (setf (mutex-%state mutex) 0) ; no guarantees about anything working now!!!
+      (sb-thread:barrier (:write))
+      (futex-wake (mutex-state-address mutex) 1)))
+
+  #-bitpacked-mutex
   ;; Order matters: set owner to NIL before releasing state.
   (let* ((self (current-vmthread-id))
          (old-owner (sb-ext:compare-and-swap (mutex-%owner mutex) self 0)))
@@ -1018,8 +1080,9 @@ or :ERROR respectively, or release the mutex anyway if :FORCE."
         (setf (mutex-state mutex) 0)
         (sb-thread:barrier (:write)) ; paranoid ?
         (with-pinned-objects (mutex)
-            (futex-wake (mutex-state-address mutex) 1)))
-      nil)))
+          (futex-wake (mutex-state-address mutex) 1)))))
+
+  nil)
 
 
 ;;;; Waitqueues/condition variables

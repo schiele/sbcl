@@ -33,6 +33,10 @@ strace -f -e futex -e signal=\!sigsegv -o $tracelog \
 
 (sb-thread:grab-mutex *m*)
 
+;; I don't know whether this test is actually valid with #+bitpacked-mutex
+;; but it passes with this minor modification.
+(defmacro our-state (m) \`(ldb (byte 32 0) (sb-thread::mutex-%state ,m)))
+
 ;; We need to simulate some thread observing the mutex in a contended state, while
 ;; the thread that currently holds it releases and re-grabs it again quickly enough
 ;; to place it in state 1, not state 2 (but having correctly notified waiters).
@@ -57,7 +61,7 @@ strace -f -e futex -e signal=\!sigsegv -o $tracelog \
 ;;; Each "spin" on the lock bit would require a system call and return.
 
 (defun test ()
-(setf (sb-thread::mutex-state *m*) 2) ; contended state
+(setf (our-state *m*) 2) ; contended state
 (setq *thr*
       (sb-thread:make-thread
        (lambda ()
@@ -76,18 +80,18 @@ strace -f -e futex -e signal=\!sigsegv -o $tracelog \
 ;; could execute enough of its retry loop to win the grab. i.e. it's going to sleep
 ;; again on the futex word, but where it would incorrectly think the mutex is already
 ;; in state 2 and would not change it, thus failing the match condition in futex_wait.
-(setf (sb-thread::mutex-state *m*) 1)
+(setf (our-state *m*) 1)
 (sb-sys:with-pinned-objects (*m*)
   (let ((disp
          (- (* (+ sb-vm:instance-slots-offset
-                  (sb-kernel:get-dsd-index sb-thread::mutex sb-thread::state))
+                  (sb-kernel:get-dsd-index sb-thread::mutex sb-thread::%state))
                sb-vm:n-word-bytes)
             sb-vm:instance-pointer-lowtag)))
     (sb-thread::futex-wake (+ (sb-kernel:get-lisp-obj-address *m*) disp
                               #+(and 64-bit big-endian) 4)
                            1)))
 
-(format t "~&looks like mutex state is ~d~%" (sb-thread::mutex-state *m*))
+(format t "~&looks like mutex state is ~d~%" (our-state *m*))
 (sleep .05) ; let that thread lose for a while
 (sb-thread:release-mutex *m*)
 (sb-thread:join-thread *thr*))
