@@ -238,4 +238,24 @@
    (lambda (x)
      (character x)
      x)
-   (or (string 1) character symbol)))
+   (or (simple-string 1) (and string (not simple-string)) character symbol)))
+
+(with-test (:name (character :input :fill-pointer))
+  (checked-compile-and-assert
+   ()
+   `(lambda (x) (character x))
+   (((make-array 1 :element-type 'character :fill-pointer 0 :initial-element #\x)) (condition 'type-error))
+   (((make-array 1 :element-type 'character :fill-pointer 1 :initial-element #\x)) #\x)
+   (((make-array 2 :element-type 'character :fill-pointer 0 :initial-element #\x)) (condition 'type-error))
+   (((make-array 2 :element-type 'character :fill-pointer 1 :initial-element #\x)) #\x)
+   (((make-array 2 :element-type 'character :fill-pointer 2 :initial-element #\x)) (condition 'type-error))))
+
+(with-test (:name (coerce character :input :fill-pointer))
+  (checked-compile-and-assert
+   ()
+   `(lambda (x y) (coerce x y))
+   (((make-array 1 :element-type 'character :fill-pointer 0 :initial-element #\x) 'character) (condition 'type-error))
+   (((make-array 1 :element-type 'character :fill-pointer 1 :initial-element #\x) 'character) #\x)
+   (((make-array 2 :element-type 'character :fill-pointer 0 :initial-element #\x) 'character) (condition 'type-error))
+   (((make-array 2 :element-type 'character :fill-pointer 1 :initial-element #\x) 'character) #\x)
+   (((make-array 2 :element-type 'character :fill-pointer 2 :initial-element #\x) 'character) (condition 'type-error))))

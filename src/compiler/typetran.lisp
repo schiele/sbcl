@@ -1846,7 +1846,7 @@
              (fail)))
           ((eql type-specifier 'character)
            (unless (types-equal-or-intersect value-type
-                                             (specifier-type '(or symbol (string 1))))
+                                             (specifier-type '(or symbol (simple-string 1) (and string (not simple-string)))))
              (fail)))
           ((csubtypep to-type (specifier-type 'complex))
            (unless (types-equal-or-intersect value-type

@@ -249,14 +249,20 @@ there are no character bits or fonts.)"
   "Return the character with the code CODE."
   (code-char code))
 
+(defun length-1-string-p (x)
+  (and (typep x 'string) (= (length x) 1)))
+(defun symbol-with-length-1-name-p (x)
+  (and (typep x 'symbol) (length-1-string-p (symbol-name x))))
+(deftype character-designator ()
+  '(or character (satisfies length-1-string-p) (satisfies symbol-with-length-1-name-p)))
+
 (defun character (object)
   "Coerce OBJECT into a CHARACTER if possible. Legal inputs are characters,
 strings and symbols of length 1."
   (flet ((do-error (control args)
            (error 'simple-type-error
                   :datum object
-                  ;;?? how to express "symbol with name of length 1"?
-                  :expected-type '(or character (string 1))
+                  :expected-type 'character-designator
                   :format-control control
                   :format-arguments args)))
     (typecase object
