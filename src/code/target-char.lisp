@@ -259,23 +259,22 @@ there are no character bits or fonts.)"
 (defun character (object)
   "Coerce OBJECT into a CHARACTER if possible. Legal inputs are characters,
 strings and symbols of length 1."
-  (flet ((do-error (control args)
+  (declare (explicit-check))
+  (flet ((do-error (control)
            (error 'simple-type-error
                   :datum object
                   :expected-type 'character-designator
                   :format-control control
-                  :format-arguments args)))
+                  :format-arguments (list object))))
     (typecase object
       (character object)
       (string (if (= 1 (length (the string object)))
                   (char object 0)
-                  (do-error
-                   "String is not of length one: ~S" (list object))))
+                  (do-error "String is not of length one: ~S")))
       (symbol (if (= 1 (length (symbol-name object)))
                   (schar (symbol-name object) 0)
-                  (do-error
-                   "Symbol name is not of length one: ~S" (list object))))
-      (t (do-error "~S cannot be coerced to a character." (list object))))))
+                  (do-error "Symbol name is not of length one: ~S")))
+      (t (do-error "~S cannot be coerced to a character.")))))
 
 ;;;; predicates
 
