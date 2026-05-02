@@ -172,7 +172,7 @@
 (define-vop (alloc-immobile-fixedobj)
   (:args (size-class :scs (any-reg) :target c-arg1)
          (nwords :scs (any-reg) :target c-arg2)
-         (header :scs (any-reg) :target c-arg3))
+         (header :scs (unsigned-reg) :target c-arg3))
   (:results (result :scs (descriptor-reg)))
   (:save-p t)
   (:temporary (:sc unsigned-reg :from (:argument 0) :to :eval :offset nl0-offset) c-arg1)

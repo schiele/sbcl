@@ -91,7 +91,7 @@
 ;;;  - Symbols have exactly 1 size-class
 ;;;  - Layouts have varying size-class
 (defun alloc-immobile-fixedobj (nwords header)
-  (let* ((widetag (logand (truly-the fixnum header) widetag-mask))
+  (let* ((widetag (logand (the sb-vm:word header) widetag-mask))
          (aligned-nwords (truly-the fixnum (align-up (the fixnum nwords) 2)))
          (size-class
           ;; If you change this, then be sure to update tests/immobile-space.impure

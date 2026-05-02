@@ -339,7 +339,6 @@ alloc_immobile_fixedobj(int size_class, int spacing_words, uword_t header)
 {
   size_class = fixnum_value(size_class);
   spacing_words = fixnum_value(spacing_words);
-  header = fixnum_value(header);
 
   unsigned int page;
   lispobj word;
