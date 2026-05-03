@@ -2169,10 +2169,10 @@
                class
                (format :no))
            (dolist (part (union-type-types type)
-                         (make-numeric-type :class class
-                                            :format format
-                                            :low low
-                                            :high high))
+                         (make-numeric-union-type :class class
+                                                  :format format
+                                                  :low low
+                                                  :high high))
              (unless (and (numeric-type-real-p part)
                           (if class
                               (eql (numeric-type-class part) class)

@@ -2006,7 +2006,7 @@
 (when-vop-existsp (:translate unsigned-byte-x-p)
   (deftransform unsigned-byte-x-p
       ((object x) (t t) * :important nil :node node)
-    (ir1-transform-type-predicate object (specifier-type `(unsigned-byte ,(lvar-value x))) node)))
+    (ir1-transform-type-predicate object (make-numeric-type 'unsigned-byte (lvar-value x)) node)))
 
 (deftransform %other-pointer-p ((object))
   (let ((type (lvar-type object)))

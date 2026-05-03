@@ -2678,7 +2678,7 @@ expansion happened."
 (defun remove-integer-bounds (type)
   (let ((low (numeric-type-low type))
         (high (numeric-type-high type)))
-    (make-numeric-type
+    (make-numeric-union-type
      :class (numeric-type-class type)
      :format (numeric-type-format type)
      :complexp (numeric-type-complexp type)
@@ -2763,7 +2763,7 @@ expansion happened."
 ;;; exclusive bounds.
 (defun coerce-numeric-bound (bound type)
   (flet ((c (thing)
-           (case type
+           (ecase type
              (rational
               (cond ((and (floatp thing) (float-infinity-p thing))
                      (return-from coerce-numeric-bound nil))
@@ -2793,7 +2793,7 @@ expansion happened."
   (macrolet ((unionize (&rest specs)
                `(type-union
                  ,@(loop for (class format coerce simple-coerce) in specs
-                         collect `(make-numeric-type
+                         collect `(make-numeric-union-type
                                    :class ',class
                                    :format ',format
                                    :complexp complexp
@@ -2839,9 +2839,9 @@ expansion happened."
                   (specifier-type 'float))))
           ((and (null complexp)
                 (or class format low high))
-           (type-union (make-numeric-type :class class :format format :complexp :complex
+           (type-union (make-numeric-union-type :class class :format format :complexp :complex
                                           :low low :high high)
-                       (make-numeric-type :class class :format format :complexp :real
+                       (make-numeric-union-type :class class :format format :complexp :real
                                           :low low :high high))))))
 
 (defun modified-numeric-type (base
@@ -2852,7 +2852,7 @@ expansion happened."
                                 (low        (numeric-type-low        base))
                                 (high       (numeric-type-high       base))
                                 (normalize-zeros t))
-  (make-numeric-type :class class
+  (make-numeric-union-type :class class
                      :format format
                      :complexp complexp
                      :low low
@@ -2954,13 +2954,13 @@ expansion happened."
 (def-type-translator integer (&optional (low '*) (high '*))
   (let ((lb (valid-bound low integer))
         (hb (valid-bound high integer)))
-    (make-numeric-type :class 'integer :complexp :real :low lb :high hb)))
+    (make-numeric-union-type :class 'integer :complexp :real :low lb :high hb)))
 
 (defmacro !def-bounded-type (type class format)
   `(def-type-translator ,type (&optional (low '*) (high '*))
      (let ((lb (valid-bound low ,type))
            (hb (valid-bound high ,type)))
-       (make-numeric-type :class ',class :format ',format :low lb :high hb))))
+       (make-numeric-union-type :class ',class :format ',format :low lb :high hb))))
 
 (!def-bounded-type rational rational nil)
 
@@ -3096,7 +3096,7 @@ expansion happened."
                (complexp1 (numeric-type-complexp type1))
                (complexp2 (numeric-type-complexp type2)))
            (cond ((eq class1 'float)
-                  (make-numeric-type
+                  (make-numeric-union-type
                    :class 'float
                    :format (ecase class2
                              (float (float-format-max format1 format2))
@@ -3128,10 +3128,10 @@ expansion happened."
                   (if (or rational
                           (or (neq class1 'integer)
                               (neq class2 'integer)))
-                      (make-numeric-type
+                      (make-numeric-union-type
                        :class (and class1 class2 'rational)
                        :complexp :real)
-                      (make-numeric-type
+                      (make-numeric-union-type
                        :class 'integer
                        :complexp :real
                        :low (and unsigned
@@ -4211,7 +4211,7 @@ expansion happened."
                (float (values 'float (float-format-name elt)))
                (ratio 'rational)
                (t 'integer))
-           (make-numeric-type :class class :format format :low elt :high elt
+           (make-numeric-union-type :class class :format format :low elt :high elt
                               :normalize-zeros nil))))
       ;; The thing is definitely implemented as a MEMBER type.
       (make-member-type (let ((xset (alloc-xset)))
@@ -5495,7 +5495,7 @@ expansion happened."
                (values :real nil nil))
               (t
                (values :real num num)))
-      (make-numeric-type :class (etypecase num
+      (make-numeric-union-type :class (etypecase num
                                   (integer (if (complexp x)
                                                'rational
                                                'integer))
@@ -5759,12 +5759,72 @@ expansion happened."
 (defconstant range-ratio-run 2)
 (defconstant range-rational-run 3)
 
-(defun make-numeric-type (&key class format (complexp :real) low high (normalize-zeros t))
+(declaim (ftype (sfunction ((member unsigned-byte signed-byte mod single-float
+                                    double-float nil real complex float
+                                    eql integer rational)
+                            &optional t t t)
+                           ctype)
+                make-numeric-type))
+(defun make-numeric-type (type &optional low high (normalize-zeros t))
+  (case type
+    (unsigned-byte
+     (make-numeric-union-type :class 'integer
+                              :low 0
+                              :high (and low
+                                         (1- (ash 1 low)))))
+    (signed-byte
+     (if low
+         (make-numeric-union-type :class 'integer
+                                  :low (- (ash 1 (1- low)))
+                                  :high (1- (ash 1 (1- low))))
+         (specifier-type 'integer)))
+    (mod
+     (if (zerop low)
+         *empty-type*
+         (make-numeric-union-type :class 'integer
+                                  :low 0
+                                  :high (1- low))))
+    ((single-float double-float)
+     (make-numeric-union-type :class 'float
+                              :format type
+                              :low (coerce-numeric-bound low type)
+                              :high (coerce-numeric-bound high type)
+                              :normalize-zeros normalize-zeros))
+    ((nil)
+     (error "Bad numeric type: ~s" type))
+    (real
+     (make-numeric-union-type :low low
+                              :high high
+                              :normalize-zeros normalize-zeros))
+    (complex
+     (multiple-value-bind (class format) (case low
+                                           ((integer rational)
+                                            (values 'rational nil))
+                                           ((float single-float double-float)
+                                            (values 'float low)))
+       (make-numeric-union-type :complexp :complex
+                                :class class
+                                :format format)))
+    (eql
+     (make-numeric-type
+      (etypecase low
+        (integer 'integer)
+        (ratio 'rational)
+        (single-float 'single-float)
+        (double-float 'double-float))
+      low low nil))
+    (t
+     (make-numeric-union-type :class type
+                              :low low
+                              :high high
+                              :normalize-zeros normalize-zeros))))
+
+(defun make-numeric-union-type (&key class format (complexp :real) low high (normalize-zeros t))
   (declare (type (member integer rational float nil) class))
   (declare (inline !compute-numtype-aspect-id))
   (let ((union-type (%make-union-numeric-type
                      class format complexp low high)))
-    (when union-type (return-from make-numeric-type union-type)))
+    (when union-type (return-from make-numeric-union-type union-type)))
   (multiple-value-bind (low high)
       (case class
         (integer
@@ -5780,7 +5840,7 @@ expansion happened."
                (if (or (consp low) (consp high)) ; if either bound is exclusive
                    (sb-xc:>= (type-bound-number low) (type-bound-number high))
                    (sb-xc:> low high)))
-      (return-from make-numeric-type *empty-type*))
+      (return-from make-numeric-union-type *empty-type*))
     (when (and (eq class 'rational) (integerp low) (eql low high))
       (setf class 'integer))
     (flet ((normalize-low-zero (x)
