@@ -540,7 +540,7 @@ that digit stands, else returns NIL."
                  (let ((weight (logior #x20 code))) ;; downcase ASCII characters.
                    (when (and (>= (decf weight (- (char-code #\a) 10)) 10)
                               (< weight radix))
-                     weight) ))))
+                     weight)))))
         (let ((number (ucd-decimal-digit char)))
           (when (and number (< number radix))
             number)))))
@@ -552,7 +552,7 @@ character exists."
   (declare (explicit-check weight))
   (cond ((typep weight '(and unsigned-byte fixnum))
          (and (< weight radix)
-              (code-char (if (< weight 10) (+ 48 weight) (+ 55 weight)))))
+              (code-char (+ weight (if (< weight 10) 48 55)))))
         (t
          (the unsigned-byte weight)
          nil)))
