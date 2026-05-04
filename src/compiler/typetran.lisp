@@ -1005,7 +1005,26 @@
                                   '(or ,@(mapcar (lambda (x) (if (ctype-p x)
                                                                  (type-specifier x)
                                                                  x))
-                                          negated)))))))
+                                          negated))))))
+                  (maybe-exactly-struct-type (type negated)
+                    ;; If it is "exactly" an ancestral type, it is always more efficient
+                    ;; to test LAYOUT= of the type rather than using STRUCTURE-IS-A
+                    ;; and then ruling out descendant types individually.
+                    (let ((whole (classoid-all-subclassoids type)))
+                      (dolist (neg negated)
+                        (when (typep neg 'structure-classoid)
+                          (dolist (remove (classoid-all-subclassoids neg))
+                            (if (member remove whole)
+                                (setq whole (remove remove whole))
+                                (return-from maybe-exactly-struct-type nil))))) ; just give up
+                      (when (singleton-p whole) ; a winner
+                        (let ((layout (info :type :compiler-layout (classoid-name (car whole)))))
+                          ;; funcallable structures should never get here.
+                          `(and (%instancep ,object)
+                                ,(if (vop-existsp :translate layout-eq)
+                                     `(layout-eq ,object ,layout ,sb-vm:instance-pointer-lowtag)
+                                     `(eq (%instance-layout ,object) ,layout))))))))
+
              (cond
                ;; (and array (not vector))
                ((and (eq (car types) (specifier-type 'array))
@@ -1030,6 +1049,9 @@
                                           (let ((rem (remove nil members)))
                                             (when rem
                                               `((member ,@rem)))))))))))
+               ((and (typep types '(cons structure-classoid null))
+                     (eq (classoid-state (car types)) :sealed)
+                     (maybe-exactly-struct-type (car types) negated)))
                (t
                 (test types negated)))))
           (t
