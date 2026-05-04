@@ -1355,7 +1355,7 @@
     (assert
      (loop for line in lines
            thereis (and (search "CMP DWORD PTR" line)
-                        (search "#<LAYOUT" line)
+                        (search "#<SB-KERNEL:LAYOUT" line)
                         (search "for SB-THREAD:MUTEX" line))))))
 
 (with-test (:name :dx-list-push-imm :skipped-on (not :immobile-space))
@@ -1472,6 +1472,7 @@
     (dolist (line (disassembly-lines (compile nil expr)))
       (when (search "CMP " line)
         (incf comparisons)
-        (when (and (search "#<LAYOUT" line) (search "FROZENTHING" line))
+        (when (and (search "#<SB-KERNEL:LAYOUT" line)
+                   (search "FROZENTHING" line))
           (setq saw-layout t))))
     (assert (and saw-layout (eql comparisons 1)))))
