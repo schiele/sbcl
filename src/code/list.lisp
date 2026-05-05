@@ -978,29 +978,43 @@
 
      ,@body))
 
+(defun string=-hash (string)
+  (sxhash (string string)))
+
+(defun string-equal-hash (string)
+  (psxhash (string string)))
+
+(declaim (inline make-hash-table-for-duplicates))
+(defun make-hash-table-for-duplicates (fun size)
+  (cond ((or (eq fun #'eq)
+             (eq fun #'eql)
+             (eq fun #'equal)
+             (eq fun #'equalp))
+         (make-hash-table :test fun :size size))
+        ((eq fun #'string=)
+         (make-hash-table :test #'string= :hash-function #'string=-hash :size size))
+        ((eq fun #'string-equal)
+         (make-hash-table :test #'string-equal :hash-function #'string-equal-hash :size size))
+        ((or (eq fun #'=)
+             (eq fun #'two-arg-=))
+         (make-hash-table :test #'two-arg-= :hash-function #'psxhash :size size))))
+
 (flet ((hashing-p (notp testp test n1 n2)
          (declare (index n1 n2))
          ;; If there is no TEST-NOT, and both lists are long enough, and the
          ;; test function is that of a standard hash-table, then use a hash-table.
          (and (not notp)
-              ;; no :TEST, or a standard hash-table test
-              (or (not testp)
-                  (eq test #'eql)
-                  (eq test #'eq)
-                  (eq test #'equal)
-                  (eq test #'equalp))
               (or (and (> n1 20) (> n2 20)) ; both lists are non-short
                   ;; or one list is very long, and the other is not tiny
                   (and (>= n1 3) (>= n2 100))
-                  (and (>= n2 3) (>= n1 100)))))
-       (unionize (testp test key n1 n2 set1 set2)
-         (let ((table (make-hash-table :test (if testp test #'eql)
-                                       :size (+ n1 n2))))
-           (dolist (elt set1)
-             (setf (gethash (apply-key key elt) table) elt))
-           (dolist (elt set2)
-             (setf (gethash (apply-key key elt) table) elt))
-           table)))
+                  (and (>= n2 3) (>= n1 100)))
+              (make-hash-table-for-duplicates (if testp test #'eql) (+ n1 n2))))
+       (unionize (table key set1 set2)
+         (dolist (elt set1)
+           (setf (gethash (apply-key key elt) table) elt))
+         (dolist (elt set2)
+           (setf (gethash (apply-key key elt) table) elt))
+         table))
 
 ;;; "If there is a duplication between list-1 and list-2, only one of the duplicate
 ;;;  instances will be in the result. If either list-1 or list-2 has duplicate entries
@@ -1018,12 +1032,13 @@
     ;; (and a 1000-element list unioned with NIL should not cons a hash-table)
     (cond ((null list1) (return-from union list2))
           ((null list2) (return-from union list1)))
-    (let ((n1 (length list1))
-          (n2 (length list2)))
-      (if (hashing-p notp testp test n1 n2)
+    (let* ((n1 (length list1))
+           (n2 (length list2))
+           (hash-table (hashing-p notp testp test n1 n2)))
+      (if hash-table
           ;; "The order of elements in the result do not have to reflect the ordering
           ;;  of list-1 or list-2 in any way."
-          (loop for k being the hash-values of (unionize testp test key n1 n2 list1 list2)
+          (loop for k being the hash-values of (unionize hash-table key list1 list2)
                 collect k)
           ;; Start with the initial result being the shorter of the inputs.
           ;; Search for each element of the longer in the shorter, adding the missing ones.
@@ -1045,9 +1060,10 @@
           ((null list2) (return-from nunion list1)))
     (binding* ((n1 (length list1))
                (n2 (length list2))
-               ((short long) (if (< n1 n2) (values list1 list2) (values list2 list1))))
-      (if (hashing-p notp testp test n1 n2)
-          (let ((table (unionize testp test key n1 n2 short long))
+               ((short long) (if (< n1 n2) (values list1 list2) (values list2 list1)))
+               (hash-table (hashing-p notp testp test n1 n2)))
+      (if hash-table
+          (let ((table (unionize hash-table key short long))
                 (union long)
                 (head long))
             (maphash (lambda (k v)

@@ -2546,26 +2546,6 @@ many elements are copied."
 
 ;;;; REMOVE-DUPLICATES
 
-(defun string=-hash (string)
-  (sxhash (string string)))
-
-(defun string-equal-hash (string)
-  (psxhash (string string)))
-
-(declaim (inline make-hash-table-for-duplicates))
-(defun make-hash-table-for-duplicates (fun size)
-  (cond ((or (eq fun #'eq)
-             (eq fun #'eql)
-             (eq fun #'equal)
-             (eq fun #'equalp))
-         (values (make-hash-table :test fun :size size) nil))
-        ((eq fun #'string=)
-         (make-hash-table :test #'string= :hash-function #'string=-hash  :size size))
-        ((eq fun #'string-equal)
-         (make-hash-table :test #'string-equal :hash-function #'string-equal-hash :size size))
-        ((eq fun #'=)
-         (make-hash-table :test #'= :hash-function #'psxhash :size size))))
-
 ;;; Remove duplicates from a list. If from-end, remove the later duplicates,
 ;;; not the earlier ones. Thus if we check from-end we don't copy an item
 ;;; if we look into the already copied structure (from after :start) and see
