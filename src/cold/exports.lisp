@@ -581,6 +581,8 @@ possibly temporarily, because it might be used internally.")
 
    ;; error-reporting facilities
 
+   "BINARY-INPUT-STREAM-P" "BINARY-OUTPUT-STREAM-P"
+   "CHARACTER-INPUT-STREAM-P" "CHARACTER-OUTPUT-STREAM-P"
    "CLOSED-STREAM-ERROR" "CLOSED-SAVED-STREAM-ERROR"
    "COMPILED-PROGRAM-ERROR"
    "COMPILER-MACRO-KEYWORD-PROBLEM"
