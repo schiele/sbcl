@@ -1547,10 +1547,13 @@
                                (lvar-dest lvar))))
         (when (and (combination-p combination)
                    (eq (combination-fun combination) lvar))
-          (loop for v in vars
-                for arg in (combination-args combination)
-                when (eq v var)
-                  return arg))))))
+          (let ((args (combination-args combination)))
+            (when (functional-kind-eq fun external toplevel-xep)
+              (pop args)) ;; arg-count
+            (loop for v in vars
+                  for arg in args
+                  when (eq v var)
+                  return arg)))))))
 
 ;;; Return the Top Level Form number of PATH, i.e. the ordinal number
 ;;; of its original source's top level form in its compilation unit.

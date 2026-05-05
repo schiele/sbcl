@@ -1042,12 +1042,18 @@
                 collect k)
           ;; Start with the initial result being the shorter of the inputs.
           ;; Search for each element of the longer in the shorter, adding the missing ones.
-          (multiple-value-bind (short long)
-              (if (< n1 n2) (values list1 list2) (values list2 list1))
-            (let ((result short))
-              (dolist (elt long result)
-                (unless (funcall member-test elt short key test)
-                  (push elt result)))))))))
+          (flet ((swapped-test (x y)
+                   (funcall test y x)))
+            (declare (dynamic-extent #'swapped-test))
+            (multiple-value-bind (short long test)
+                (if (< n1 n2)
+                    (values list1 list2 (and test
+                                             #'swapped-test))
+                    (values list2 list1 test))
+              (let ((result short))
+                (dolist (elt long result)
+                  (unless (funcall member-test elt short key test)
+                    (push elt result))))))))))
 
 (defun nunion (list1 list2 &key key (test nil testp) (test-not nil notp))
   "Destructively return the union of LIST1 and LIST2."
@@ -1060,7 +1066,10 @@
           ((null list2) (return-from nunion list1)))
     (binding* ((n1 (length list1))
                (n2 (length list2))
-               ((short long) (if (< n1 n2) (values list1 list2) (values list2 list1)))
+               ((short long swap)
+                (if (< n1 n2)
+                    (values list1 list2 t)
+                    (values list2 list1 nil)))
                (hash-table (hashing-p notp testp test n1 n2)))
       (if hash-table
           (let ((table (unionize hash-table key short long))
@@ -1074,12 +1083,18 @@
                            (push v union))) ; easier than re-using cons cells of SHORT
                      table)
             union)
-          (do ((orig short)
-               (elt (car long) (car long)))
-              ((endp long) short)
-            (if (funcall member-test elt orig key test)
-                (pop long)
-                (shiftf long (cdr long) short long))))))))
+          (flet ((swapped-test (x y)
+                   (funcall (truly-the function test) y x)))
+            (declare (dynamic-extent #'swapped-test))
+            (let ((test (if swap
+                            (and test #'swapped-test)
+                            test)))
+              (do ((orig short)
+                   (elt (car long) (car long)))
+                  ((endp long) short)
+                (if (funcall member-test elt orig key test)
+                    (pop long)
+                    (shiftf long (cdr long) short long))))))))))
 
 (defun intersection (list1 list2
                      &key key (test nil testp) (test-not nil notp))
