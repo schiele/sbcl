@@ -3244,7 +3244,9 @@
     (cond ((delay-p cast)
            (unless (policy cast (>= insert-debug-catch 2)) ;; used to defeat TCO
              (when (do-uses (use value t)
-                     (unless (immediately-used-p value use)
+                     (unless (and (immediately-used-p value use)
+                                  (not (and (combination-p use)
+                                            (unboxed-specialized-return-p (combination-fun-debug-name use)))))
                        (return)))
                (delete-cast cast)
                t)))
