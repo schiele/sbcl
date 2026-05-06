@@ -1080,3 +1080,13 @@
                          (compile nil `(lambda () #',sym)))))))
     (assert (search "special operator IF was found" (try 'if)))
     (assert (search "macro COND was found" (try 'cond)))))
+
+(with-test (:name :xep-fun-type-mismatch)
+  (assert
+   (nth-value 2
+              (checked-compile `(lambda (n)
+                                  (funcall (if n
+                                               (lambda (a) (+ a 2))
+                                               (lambda (a) (+ a 1)))
+                                           1 2))
+                               :allow-warnings t))))
