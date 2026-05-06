@@ -1774,6 +1774,7 @@ is a good idea, but see SB-SYS re. blurring of boundaries.")
            "FUN-TYPE-KEYP" "FUN-TYPE-KEYWORDS" "FUN-TYPE-NARGS"
            "FUN-TYPE-OPTIONAL" "FUN-TYPE-P" "FUN-TYPE-REQUIRED"
            "FUN-TYPE-REST" "FUN-TYPE-RETURNS" "FUN-TYPE-WILD-ARGS"
+           "FUN-TYPE-CHANGE-RETURN"
            "GENERALIZED-BOOLEAN"
            "GENERIC-ABSTRACT-TYPE-FUNCTION"
            "GET-CLOSURE-LENGTH" "GET-HEADER-DATA"

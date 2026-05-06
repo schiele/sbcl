@@ -809,8 +809,12 @@
            (unless (type= (res) (tail-set-type tails))
              (setf (tail-set-type tails) (res))
              (dolist (fun (tail-set-funs tails))
-               (dolist (ref (leaf-refs fun))
-                 (reoptimize-lvar (node-lvar ref))))))))))
+               (let* ((entry-type (fun-type-change-return (leaf-type fun) (res)))
+                      (ref-type (make-single-value-type entry-type)))
+                 (setf (leaf-type fun) entry-type)
+                 (dolist (ref (leaf-refs fun))
+                   (setf (node-derived-type ref) ref-type)
+                   (reoptimize-lvar (node-lvar ref)))))))))))
 
 ;;;; IF optimization
 

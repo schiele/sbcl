@@ -620,6 +620,21 @@
             (new fun-designator-type)
             (new fun-type))))))
 
+(defun fun-type-change-return (type return)
+  (if (fun-type-p type)
+      (make-fun-type
+       :required (fun-type-required type)
+       :optional (fun-type-optional type)
+       :rest (fun-type-rest type)
+       :keyp (fun-type-keyp type)
+       :keywords (fun-type-keywords type)
+       :allowp (fun-type-allowp type)
+       :wild-args (fun-type-wild-args type)
+       :returns return)
+      (make-fun-type
+       :wild-args t
+       :returns return)))
+
 ;; This seems to be used only by cltl2, and within 'cross-type',
 ;; where it is never used, which makes sense, since pretty much we
 ;; never want this object, but instead the classoid FUNCTION
