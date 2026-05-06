@@ -2133,7 +2133,8 @@
 (declaim (start-block ir1-optimize-set constant-reference-p delete-let
                       propagate-let-args propagate-local-call-args
                       propagate-to-refs propagate-from-sets
-                      ir1-optimize-mv-combination))
+                      ir1-optimize-mv-combination
+                      substitute-single-use-lvar))
 
 ;;; Propagate TYPE to LEAF and its REFS, marking things changed.
 ;;;
