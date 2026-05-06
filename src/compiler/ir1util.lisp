@@ -1549,7 +1549,7 @@
                    (eq (combination-fun combination) lvar))
           (let ((args (combination-args combination)))
             (when (functional-kind-eq fun external toplevel-xep)
-              (pop args)) ;; arg-count
+              (pop vars)) ;; arg-count
             (loop for v in vars
                   for arg in args
                   when (eq v var)

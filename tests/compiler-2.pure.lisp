@@ -5151,4 +5151,4 @@
                   (lambda (a) (+ a 2))
                   (lambda (a) (+ a 1)))
               1))
-   number))
+   (integer 2 3)))

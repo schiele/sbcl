@@ -1090,3 +1090,14 @@
                                                (lambda (a) (+ a 1)))
                                            1 2))
                                :allow-warnings t))))
+
+(with-test (:name :see-through-xep-call)
+  (assert (nth-value 3
+                     (checked-compile
+                      `(lambda (n l)
+                         (funcall (if n
+                                      (lambda (x key)
+                                        (member x l :key key))
+                                      #'list)
+                                  1 #'eq))
+                      :allow-style-warnings t))))
